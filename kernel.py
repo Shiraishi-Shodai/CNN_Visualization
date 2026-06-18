@@ -44,7 +44,7 @@ def kernel2D(kernel_shape : tuple, image : torch.tensor, stride:int=1 , padding:
 def kernel2DP(kernel_shape : tuple, image : torch.tensor, padding:int=0, stride:int=1):
     """
     stride=1
-    padding=0
+    padding=X
     
     Args:
         kernel_shape : (C=1, H, W)
@@ -84,20 +84,76 @@ def kernel2DP(kernel_shape : tuple, image : torch.tensor, padding:int=0, stride:
 def zeroPadding(image, padding=0):
     """
     Args:
-        kernel_shape : (C=1, H, W)
+        kernel_shape : (N, C, H, W)
     """
-    C, H, W = image.shape
+    N, C, H, W = image.shape
     
     # paddingが0以下なら処理を終了する
     if padding <= 0 :
         return image
     
-    padding_image = torch.zeros(C, H + padding * 2, W + padding * 2, dtype=torch.float)
+    padding_image = torch.zeros(N, C, H + padding * 2, W + padding * 2, dtype=torch.float)
     
-    for c in range(C):
-        padding_image[c, padding : -padding , padding : -padding] = image[c]
+    padding_image[:, :, padding : -padding , padding : -padding] = image
     
     return padding_image
+
+
+def convN(x, kernel, padding, stride):
+    """カーネルをずらし、加重和を計算する回数を計算(カーネルで覆えない部分は除外)
+    出力画像サイズを返すことと同義
+    """
+    cn = (((x + padding * 2) - kernel) / stride) + 1
+    return int(cn) # カーネル外を除外
+
+### 2次元のフィルターを実装する(N=1, C=1, padding=可変, stride=可変)
+def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride:int=1):
+    """
+    stride=X
+    padding=X
+    
+    Args:
+        kernel_shape : (C=1, H, W)
+        image.shape : (C=1, H, W)
+    """
+    
+    kernel = torch.randint(0, 10, (kernel_shape), dtype=torch.float)
+    
+    N, C, H, W = image.shape
+    
+    out_channels, input_channels, fH, fW = kernel_shape
+    
+    # フィルターが縦に動く回数
+    row_n = convN(H, fH, padding, stride)
+    # フィルターが横に動く回数
+    col_n = convN(W, fW, padding, stride)
+    
+    # 1時畳み込み行列(input_kernel分の行列を保持)
+    tmp_image = torch.zeros((N, C, row_n, col_n))
+    
+    # 畳み込み結果行列
+    conv_image = torch.zeros((N, out_channels, row_n, col_n))
+    
+    # パディング
+    image = zeroPadding(image, padding)
+    print(f"padding image \n {image}")
+    print(f"kernel : \n {kernel}")
+    
+    for n in range(N):
+        for c in range(C):
+            for r in range(row_n):
+                for w in range(col_n):
+                    clip_image = image[n, c, r * stride : r * stride +  fH, w * stride : w * stride + fW]
+                    ckernel = kernel[0, c] 
+                    scalar = clip_image.flatten() @ ckernel.flatten()
+                    print(f"========channel: {c}, row : {r}, width : {w}===========")
+                    print(f"切り取り画像 \n {clip_image}")
+                    print(f"計算結果 \n {scalar}")
+                    tmp_image[n, c, r, w] = scalar
+    
+    outc = conv_image.sum(dim=1) # チャンネルごとに畳み込み結果を加算
+    conv_image[:, 0] = outc
+    print(conv_image.shape)
 
 def main():
     # kernel2D()
@@ -110,16 +166,29 @@ def main():
     #     shuffle=False
     # )
     
-    image = torch.arange(4*4, dtype=torch.float).reshape(1, 4, 4)
+    n = 5
+    c = 3
+    s = 4
+    image = torch.arange(n*c*s*s, dtype=torch.float).reshape(n, c, s, s)
     padding = 1
+    stride = 2
+    out_channels = 2
+    
+    fH = 3 
+    fW = 3
+
+    kernel_shape = (out_channels, c, fH, fW)
     print(f"画像表示")
     print(image)
-    kernel_shape = (1, 3, 3)
+    print(image.shape)
+    print(kernel_shape)
     
     # kernel2D(kernel_shape, image) # 純粋な畳み込み
-    # zeroPadding(image, padding)
+    zeroPadding(image, padding)
     
     # kernel2DP(kernel_shape, image, padding) # paddingを考慮した畳み込み
+    
+    kernel2DPS(kernel_shape, image, padding, stride)
     
 if __name__ == "__main__":
     main()
