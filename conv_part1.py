@@ -1,6 +1,7 @@
 from PIL import Image
 import torch
 from torchvision import transforms, datasets
+import math
 
 ### 2次元のフィルターを実装する(N=1, C=1, padding=1, stride=1)
 def kernel2D(kernel_shape : tuple, image : torch.tensor, stride:int=1 , padding:int=0):
@@ -104,7 +105,7 @@ def convN(x, kernel, padding, stride):
     出力画像サイズを返すことと同義
     """
     cn = (((x + padding * 2) - kernel) / stride) + 1
-    return int(cn) # カーネル外を除外
+    return math.floor(cn) # カーネル外を除外
 
 ### 2次元のフィルターを実装する(N=1, C=1, padding=可変, stride=可変)
 def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride:int=1):
@@ -115,19 +116,22 @@ def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride
         padding :
         stride : 
     """
-    kernel = torch.randint(0, 10, (kernel_shape), dtype=torch.float)
     
     N, C, H, W = image.shape
     
     out_channels, input_channels, fH, fW = kernel_shape
     
+    # 入力画像とカーネルのinput_channel一致チェック
+    assert input_channels == C
+    
+    # カーネルとバイアスの定義
+    kernel = torch.randint(0, 10, (kernel_shape), dtype=torch.float)
+    bias = torch.zeros((out_channels, 1, 1))
+    
     # フィルターが縦に動く回数
     row_n = convN(H, fH, padding, stride)
     # フィルターが横に動く回数
     col_n = convN(W, fW, padding, stride)
-    
-    # 1時畳み込み行列(input_kernel分の行列を保持)
-    tmp_image = torch.zeros((N, C, row_n, col_n))
     
     # 畳み込み結果行列
     conv_image = torch.zeros((N, out_channels, row_n, col_n))
@@ -139,6 +143,8 @@ def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride
     
     # outputチャネル数
     for o in range(out_channels):
+        # 1時畳み込み行列(input_kernel分の行列を保持)
+        tmp_image = torch.zeros((N, C, row_n, col_n))
         # バッチサイズ数
         for n in range(N):
             # インプットチャネル数
@@ -158,6 +164,9 @@ def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride
         outc = tmp_image.sum(dim=1) # チャンネルごとに畳み込み結果を加算
         conv_image[:, o] = outc # 出力チャネル1個分の畳み込み結果を格納
         print(f"入力チャネル数ごとの畳み込み : {outc}")
+        
+    # バイアスを計算
+    conv_image = conv_image + bias
     
     return conv_image
 
