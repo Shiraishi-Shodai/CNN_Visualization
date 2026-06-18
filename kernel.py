@@ -109,14 +109,12 @@ def convN(x, kernel, padding, stride):
 ### 2次元のフィルターを実装する(N=1, C=1, padding=可変, stride=可変)
 def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride:int=1):
     """
-    stride=X
-    padding=X
-    
     Args:
-        kernel_shape : (C=1, H, W)
-        image.shape : (C=1, H, W)
+        kernel_shape : (out_channels, input_channels, H, W)
+        image.shape : (N, input_channels, H, W)
+        padding :
+        stride : 
     """
-    
     kernel = torch.randint(0, 10, (kernel_shape), dtype=torch.float)
     
     N, C, H, W = image.shape
@@ -139,21 +137,29 @@ def kernel2DPS(kernel_shape : tuple, image : torch.tensor, padding:int=1, stride
     print(f"padding image \n {image}")
     print(f"kernel : \n {kernel}")
     
-    for n in range(N):
-        for c in range(C):
-            for r in range(row_n):
-                for w in range(col_n):
-                    clip_image = image[n, c, r * stride : r * stride +  fH, w * stride : w * stride + fW]
-                    ckernel = kernel[0, c] 
-                    scalar = clip_image.flatten() @ ckernel.flatten()
-                    print(f"========channel: {c}, row : {r}, width : {w}===========")
-                    print(f"切り取り画像 \n {clip_image}")
-                    print(f"計算結果 \n {scalar}")
-                    tmp_image[n, c, r, w] = scalar
+    # outputチャネル数
+    for o in range(out_channels):
+        # バッチサイズ数
+        for n in range(N):
+            # インプットチャネル数
+            for c in range(C):
+                # 画像の高さ
+                for r in range(row_n):
+                    # 画像の幅
+                    for w in range(col_n):
+                        clip_image = image[n, c, r * stride : r * stride +  fH, w * stride : w * stride + fW]
+                        ckernel = kernel[o, c]
+                        scalar = clip_image.flatten() @ ckernel.flatten()
+                        print(f"========channel: {c}, row : {r}, width : {w}===========")
+                        print(f"切り取り画像 \n {clip_image}")
+                        print(f"計算結果 \n {scalar}")
+                        tmp_image[n, c, r, w] = scalar
+
+        outc = tmp_image.sum(dim=1) # チャンネルごとに畳み込み結果を加算
+        conv_image[:, o] = outc # 出力チャネル1個分の畳み込み結果を格納
+        print(f"入力チャネル数ごとの畳み込み : {outc}")
     
-    outc = conv_image.sum(dim=1) # チャンネルごとに畳み込み結果を加算
-    conv_image[:, 0] = outc
-    print(conv_image.shape)
+    return conv_image
 
 def main():
     # kernel2D()
@@ -188,7 +194,8 @@ def main():
     
     # kernel2DP(kernel_shape, image, padding) # paddingを考慮した畳み込み
     
-    kernel2DPS(kernel_shape, image, padding, stride)
+    conv_image = kernel2DPS(kernel_shape, image, padding, stride)
+    print(f"畳み込み結果 : \n {conv_image}")
     
 if __name__ == "__main__":
     main()
