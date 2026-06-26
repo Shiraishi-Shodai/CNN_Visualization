@@ -14,11 +14,13 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
     Returns
     -------
     col : 2次元配列(畳み込み後の特徴マップの要素数, カーネルサイズ(filter_h * filter_w))
+    
+    input_data(batch_size, C, H, W) → col(batch_size * out_h * out_w, C * FH * FW)
     """
     
     N, C, H, W = input_data.shape
-    out_h = (H + pad * 2 - filter_h) // 1 + 1
-    out_w = (W + pad * 2 - filter_w) // 1 + 1
+    out_h = (H + pad * 2 - filter_h) // stride + 1
+    out_w = (W + pad * 2 - filter_w) // stride + 1
     
     img = torch.tensor(np.pad(input_data, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant'))
     col = torch.zeros((N, C, filter_h, filter_w, out_h, out_w))

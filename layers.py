@@ -35,7 +35,7 @@ class Convolution:
         col = im2col(x, FH, FW, self.stride, self.pad)             # (batch_size * out_h * out_w, C * FH * FW)
         col_W = self.W.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
 
-        out = col @ col_W + self.b                                 # (batch_size * out_h * out_w, FN)
+        out = col @ col_W + self.b                                 # (batch_size * out_h * out_w, C * FH * FW) @ (C * FH * FW, FN) = (batch_size * out_h * out_w, FN)
         out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2) # (batch_size * out_h * out_w, FN) → (batch_size, FN, out_h, out_w)
         
         self.x = x
@@ -69,15 +69,17 @@ class Pooling:
         out_h = (H - self.pool_h) // self.stride + 1
         out_w = (W - self.pool_w) // self.stride + 1
         
-        col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
-        col = col.reshape(-1, self.pool_h*self.pool_w)
+        col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad) # (batch_size * out_h * out_w, C * pool_h * pool_w)
+        col = col.reshape(-1, self.pool_h*self.pool_w) # (batch_size * out_h * out_w * C, pool_h * pool_w)
 
-        arg_max = torch.argmax(col, dim=1)
-        out = torch.max(col, dim=1)
+        arg_max = torch.argmax(col, dim=1) # プーリング領域での最大値をのインデックスをとる
+        out = torch.max(col, dim=1).values # プーリング領域の最大値を求める
         out = out.reshape(N, out_h, out_w, C).permute(0, 3, 1, 2)
 
         self.x = x
         self.arg_max = arg_max
+        
+        return out
         
     def backward(self, dout):
         dout = dout.permute(0, 2, 3, 1)
