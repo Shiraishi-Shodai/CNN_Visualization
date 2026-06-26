@@ -32,11 +32,11 @@ class Convolution:
         out_h = (H + self.pad * 2 - FH) // self.stride + 1
         out_w = (W + self.pad * 2 - FW) // self.stride + 1
 
-        col = im2col(x, FH, FW, self.stride, self.pad)
-        col_W = self.W.reshape(FN, -1).T
-        
-        out = col @ col_W + self.b
-        out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2)
+        col = im2col(x, FH, FW, self.stride, self.pad)             # (batch_size * out_h * out_w, C * FH * FW)
+        col_W = self.W.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
+
+        out = col @ col_W + self.b                                 # (batch_size * out_h * out_w, FN)
+        out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2) # (batch_size * out_h * out_w, FN) → (batch_size, FN, out_h, out_w)
         
         self.x = x
         self.col = col
