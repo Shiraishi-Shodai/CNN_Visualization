@@ -1,6 +1,28 @@
 import torch
 from utils import *
 
+class Affine:
+    def __init__(self, W, b):
+        self.W = W
+        self.b = b
+        self.x = None
+        
+        self.dW = None
+        self.db = None
+    
+    def forward(self, x):
+        out = x @ self.W + self.b
+        self.x = x
+        
+        return out
+
+    def backward(self, dout):
+        dx = dout @ self.W.T
+        self.dW = self.x.T @ dout
+        self.db = torch.sum(dout, dim=0, keepdim=True)
+
+        return dx
+        
 class Convolution:
     def __init__(self, W, b, stride=1, pad=0):
         self.W = W

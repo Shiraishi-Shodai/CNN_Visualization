@@ -1,9 +1,12 @@
 import math
+from layers import Affine
+import torch
+
+torch.manual_seed(42)
 
 def main():
-    print(-19.1 // 255.0)
-    print(math.floor(-0.0745))
-    print(math.floor(2))
+    pass
+
 
 if __name__ == "__main__":
     main()
