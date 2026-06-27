@@ -55,8 +55,6 @@ def accuracy(pred, t):
     pred : 予測値のラベルベクトル(1次元)
     t    : 正解ラベル(1次元)
     """
-    pred = torch.tensor([0, 1, 2])
-    t = torch.tensor([1, 0, 2])
     N = len(pred)
     score = (pred == t).sum() / N
     
