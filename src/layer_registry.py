@@ -109,3 +109,18 @@ def build_max_pooling(layer_cfg, fan_in):
     padding = layer_cfg["padding"]
     
     return MaxPooling(pool_h, pool_w, stride, padding), fan_out
+
+@register("Flatten")
+def build_relu(layer_cfg, fan_in):
+    """Flattenを生成する
+    Parameters
+    ----------
+    layer_cfg : layerのconfig
+    fan_in : 入力値の次元数(ニューロン数)
+    
+    Returns
+    -------
+    layer : 生成したlayer
+    """
+    fan_out = layer_cfg["out_features"]
+    return Flatten(), fan_out

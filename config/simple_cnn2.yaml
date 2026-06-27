@@ -47,5 +47,8 @@ model:
 
     - type: ReLU
 
+    - type : Flatten
+      out_features : 192
+
   loss:
     type : SoftmaxWithLoss

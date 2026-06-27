@@ -196,3 +196,28 @@ class MaxPooling:
         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
 
         return dx
+    
+class Flatten:
+    def __init__(self):
+        self.params = []
+        self.grads = []
+        self.original_shape = None
+    
+    def forward(self, x):
+        """フラットにする
+        Parameter
+        ---------
+        x : (N, C, H, W)
+        
+        Returns
+        -------
+        out : (N, C * H * W)
+        """
+        
+        self.original_shape = x.shape
+        return x.reshape(self.original_shape[0], -1)
+    
+    def backward(self, dout):
+        return dout.reshape(self.original_shape)
+        
+        
