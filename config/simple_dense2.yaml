@@ -2,7 +2,7 @@
 model:
   name : SimpleDense2
 
-  input_size : 10
+  input_size : 2
   output_size : 5
 
   layers:

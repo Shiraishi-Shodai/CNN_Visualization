@@ -1,7 +1,4 @@
-from utils import load_yaml
-from pathlib import Path
-from initializers import get_initializer
-from layers import *
+from layer_registry import *
 
 class ModelBuilder:
     """configで受け取ったレイヤーを生成し、生成したレイヤーのリストを返す。
@@ -43,67 +40,58 @@ class ModelBuilder:
 
         for layer_cfg in model_cfg["layers"]:
             layer_type = layer_cfg["type"]
+            layer_builder = get_layer_builder(layer_type)
+            layer, fan_in = layer_builder(layer_cfg, fan_in)
             
-            if layer_type == "Affine":
-                layer, fan_out = self._build_affine(layer_cfg, fan_in)
-                
-                layers.append(layer)
-                fan_in = fan_out
-            
-            elif layer_type == "ReLU":
-                layer = self._build_relu()  
-                layers.append(layer)
-            else:
-                raise ValueError(
-                    f"layer type : {layer_type}が見つかりません"
-                )
-        
+            layers.append(layer)
         return layers
     
-    def _build_affine(self, layer_cfg, fan_in):
-        """Affineを生成する
-        Parameters
-        ----------
-        layer_cfg : layerのconfig
-        fan_in : 入力値の次元数(ニューロン数)
+    # def _build_affine(self, layer_cfg, fan_in):
+    #     """Affineを生成する
+    #     Parameters
+    #     ----------
+    #     layer_cfg : layerのconfig
+    #     fan_in : 入力値の次元数(ニューロン数)
         
-        Returns
-        -------
-        layer : 生成したlayer
-        fan_out : 次のlayerのfan_in
-        """
-        fan_out = layer_cfg["out_features"]
-        weight_name = layer_cfg["initializer"]["weight"]
-        bias_name = layer_cfg["initializer"]["bias"]
+    #     Returns
+    #     -------
+    #     layer : 生成したlayer
+    #     fan_out : 次のlayerのfan_in
+    #     """
+    #     fan_out = layer_cfg["out_features"]
+    #     weight_name = layer_cfg["initializer"]["weight"]
+    #     bias_name = layer_cfg["initializer"]["bias"]
 
-        weight_init = get_initializer(weight_name)
-        bias_init = get_initializer(bias_name)
+    #     weight_init = get_initializer(weight_name)
+    #     bias_init = get_initializer(bias_name)
 
-        weight = weight_init(
-            (fan_in, fan_out),
-            fan_in,
-            fan_out
-        )
+    #     weight = weight_init(
+    #         (fan_in, fan_out),
+    #         fan_in,
+    #         fan_out
+    #     )
         
-        bias = bias_init(
-            (fan_out, )
-        )
+    #     bias = bias_init(
+    #         (fan_out, )
+    #     )
         
-        layer =  Affine(weight, bias)
-        return layer, fan_out
+    #     layer =  Affine(weight, bias)
+    #     return layer, fan_out
     
-    def _build_relu(self):
-        """ReLUを生成する
-        Returns
-        -------
-        layer : 生成したlayer
-        """
-        return ReLU()
+    # def _build_relu(self):
+    #     """ReLUを生成する
+    #     Returns
+    #     -------
+    #     layer : 生成したlayer
+    #     """
+    #     return ReLU()
 
-yaml_file = Path(r"config/simple_dense2.yaml")
-config = load_yaml(yaml_file)
+# from utils import load_yaml
+# from pathlib import Path
+# yaml_file = Path(r"config/simple_dense2.yaml")
+# config = load_yaml(yaml_file)
 
-mb = ModelBuilder(config)
+# mb = ModelBuilder(config)
 
-layers = mb.build()
-print(layers)
+# layers = mb.build()
+# print(layers)

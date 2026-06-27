@@ -18,7 +18,7 @@ def he_initializer(shape, fan_in, fan_out=None):
         loc=0,
         scale=np.sqrt(2/fan_in),
         size=shape
-    ).astype("float")), requires_grad=False)
+    ).astype("float32")), requires_grad=False)
     
 @register("xavier")
 def xavier_initializer(shape, fan_in, fan_out):
@@ -26,11 +26,11 @@ def xavier_initializer(shape, fan_in, fan_out):
         loc=0,
         scale=np.sqrt(2/(fan_in + fan_out)),
         size=shape
-    ).astype("float")), requires_grad=False)
+    ).astype("float32")), requires_grad=False)
     
 @register("zeros")
 def zeros_initializer(shape, fan_in=None, fan_out=None):
-    return nn.Parameter(torch.tensor(np.zeros(shape).astype("float")), requires_grad=False)
+    return nn.Parameter(torch.tensor(np.zeros(shape).astype("float32")), requires_grad=False)
 
 def get_initializer(name):
     if name not in INITIALIZERS:
