@@ -1,5 +1,18 @@
 import torch 
 import numpy as np
+from yaml import safe_load
+from pathlib import Path
+
+def load_yaml(yaml_file : Path):
+    """yamlの読み込み
+    Parameters
+    ----------
+    yaml_file : Path
+    """
+    
+    with open(yaml_file, mode="r", encoding="utf-8") as f:
+        config = safe_load(f)
+        return config
 
 def softmax(x):
     """
