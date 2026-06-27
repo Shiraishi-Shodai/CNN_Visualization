@@ -1,9 +1,13 @@
-import torch
-from layers import Convolution, MaxPooling
-import torch.nn as nn
-import numpy as np
-from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
-import japanize_matplotlib
-import math
+from sequential import Sequential
+from model_builder import ModelBuilder
+from utils import load_yaml
+from pathlib import Path
 
+yaml_file = Path(r"config/VGG16.yaml")
+config = load_yaml(yaml_file)
+mb = ModelBuilder(config)
+
+layers = mb.build()
+
+for layer in layers:
+    print(layer)
