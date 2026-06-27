@@ -12,23 +12,23 @@ model:
         weight : "he"
         bias : "zeros"
 
-    - type: ReLU
+    # - type: ReLU
     
-    - type : Affine
-      out_features : 4
-      initializer : 
-        weight : "he"
-        bias : "zeros"
+    # - type : Affine
+    #   out_features : 4
+    #   initializer : 
+    #     weight : "he"
+    #     bias : "zeros"
 
-    - type: ReLU
+    # - type: ReLU
       
-    - type : Affine
-      out_features : 5
-      initializer : 
-        weight : "he"
-        bias : "zeros"
+    # - type : Affine
+    #   out_features : 5
+    #   initializer : 
+    #     weight : "he"
+    #     bias : "zeros"
 
-    - type: ReLU
+    # - type: ReLU
 
   loss:
     type : SoftmaxWithLoss
