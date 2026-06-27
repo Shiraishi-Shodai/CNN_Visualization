@@ -1,5 +1,5 @@
 import torch
-from utils import im2col, col2im, softmax, cross_entropy
+from utils import im2col, col2im, softmax, cross_entropy_error
 
 class Affine:
     def __init__(self, W, b):
@@ -44,7 +44,7 @@ class SoftmaxWithLoss:
         """
         self.t = t
         self.y = softmax(x)
-        self.loss = cross_entropy(self.y, t)
+        self.loss = cross_entropy_error(self.y, t)
 
         return self.loss
         

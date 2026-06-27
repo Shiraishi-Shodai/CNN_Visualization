@@ -18,22 +18,34 @@ def softmax(x):
     
     return z
 
-def cross_entropy(y, t):
-    """
-    Parameters
-    ----------
-    y : 出力関数適用後行列 (N, D)
-    t : 正解ラベル(one-hot想定)
+# def cross_entropy_error(y, t):
+#     """
+#     Parameters
+#     ----------
+#     y : 出力関数適用後行列 (N, D)
+#     t : 正解ラベル(one-hot想定)
     
-    Returns
-    -------
-    loss : バッチ平均をしたスカラ
-    """
-    N, D = y.shape
-    loss = - torch.log(y) * t
-    loss = loss.sum() * (1 / N)
+#     Returns
+#     -------
+#     loss : バッチ平均をしたスカラ
+#     """
+#     N, D = y.shape
+#     loss = - torch.log(y) * t
+#     loss = loss.sum() * (1 / N)
     
-    return loss
+#     return loss
+
+def cross_entropy_error(y, t):
+    if y.ndim == 1:
+        t = t.reshape(1, t.size)
+        y = y.reshape(1, y.size)
+
+    # 教師データがone-hot-vectorの場合、正解ラベルのインデックスに変換
+    if t.size == y.size:
+        t = t.argmax(axis=1)
+
+    N = y.shape[0]
+    return -torch.sum(np.log(y[np.arange(N), t] + 1e-7)) / N
 
 
 
