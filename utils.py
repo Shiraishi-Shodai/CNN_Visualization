@@ -35,6 +35,20 @@ def softmax(x):
     
 #     return loss
 
+def accuracy(pred, t):
+    """
+    Parameters
+    ----------
+    pred : 予測値のラベルベクトル(1次元)
+    t    : 正解ラベル(1次元)
+    """
+    pred = torch.tensor([0, 1, 2])
+    t = torch.tensor([1, 0, 2])
+    N = len(pred)
+    score = (pred == t).sum() / N
+    
+    return score
+
 def cross_entropy_error(y, t):
     if y.ndim == 1:
         t = t.reshape(1, t.size)
@@ -45,7 +59,7 @@ def cross_entropy_error(y, t):
         t = t.argmax(axis=1)
 
     N = y.shape[0]
-    return -torch.sum(np.log(y[np.arange(N), t] + 1e-7)) / N
+    return -torch.sum(np.log(y[np.arange(N), t] + 1e-7)) / N  
 
 
 

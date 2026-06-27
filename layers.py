@@ -1,6 +1,20 @@
 import torch
 from utils import im2col, col2im, softmax, cross_entropy_error
 
+class ReLU:
+    
+    def __init__(self):
+        self.x = None
+    
+    def forward(self, x):
+        """
+        """
+        self.x = x
+        return torch.where(self.x > 0, self.x, 0)
+    
+    def backward(self, dout=1):
+        return torch.where(self.x > 0, dout, 0)
+
 class Affine:
     def __init__(self, W, b):
         self.W = W
@@ -46,8 +60,7 @@ class SoftmaxWithLoss:
         self.y = softmax(x)
         self.loss = cross_entropy_error(self.y, t)
 
-        return self.loss
-        
+        return self.loss   
     
     def backward(self, dout=1):
         """
