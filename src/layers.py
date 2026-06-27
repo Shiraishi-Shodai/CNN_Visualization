@@ -42,9 +42,9 @@ class Affine:
 
 class SoftmaxWithLoss:
     def __init__(self):
+        self.params = []
+        self.grads = []
         self.loss = None
-        self.dout = None
-        self.x = None
         self.y = None
         self.t = None
     
@@ -99,8 +99,8 @@ class SoftmaxWithLoss:
         
 class Convolution:
     def __init__(self, W, b, stride=1, pad=0):
-        self.W = W
-        self.b = b
+        self.params = [W, b]
+        self.grads = [torch.zeros_like(W), torch.zeros_like(b)]
         self.stride = stride
         self.pad = pad
         
@@ -123,15 +123,16 @@ class Convolution:
         -------
         out : 4次元配列(N, out_h, out_w, 1)
         """
-        FN, C, FH, FW = self.W.shape
+        weight, bias = self.params
+        FN, C, FH, FW = weight.shape
         N, C, H, W = x.shape
         out_h = (H + self.pad * 2 - FH) // self.stride + 1
         out_w = (W + self.pad * 2 - FW) // self.stride + 1
 
         col = im2col(x, FH, FW, self.stride, self.pad)             # (batch_size * out_h * out_w, C * FH * FW)
-        col_W = self.W.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
+        col_W = weight.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
 
-        out = col @ col_W + self.b                                 # (batch_size * out_h * out_w, C * FH * FW) @ (C * FH * FW, FN) = (batch_size * out_h * out_w, FN)
+        out = col @ col_W + bias                                 # (batch_size * out_h * out_w, C * FH * FW) @ (C * FH * FW, FN) = (batch_size * out_h * out_w, FN)
         out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2) # (batch_size * out_h * out_w, FN) → (batch_size, FN, out_h, out_w)
         
         self.x = x
@@ -141,15 +142,19 @@ class Convolution:
         return out
     
     def backward(self, dout):
-        FN, C, FH, FW = self.W.shape
+        weight, bias = self.params
+        FN, C, FH, FW = weight.shape
         dout = dout.permute(0, 2, 3, 1).reshape(-1, FN)
         
-        self.db = torch.sum(dout, dim=0)
-        self.dW = self.col.T @ dout
-        self.dW = self.dW.permute(1, 0).reshape(FN, C, FH, FW)
+        db = torch.sum(dout, dim=0)
+        dW = self.col.T @ dout
+        dW = dW.permute(1, 0).reshape(FN, C, FH, FW)
 
         dcol = dout @ self.col_W.T
         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
+        
+        self.grads[0][...] = dW
+        self.grads[1][...] = db
 
         return dx
     
