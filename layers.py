@@ -1,5 +1,5 @@
 import torch
-from utils import *
+from utils import im2col, col2im, softmax, cross_entropy
 
 class Affine:
     def __init__(self, W, b):
@@ -21,6 +21,64 @@ class Affine:
         self.dW = self.x.T @ dout
         self.db = torch.sum(dout, dim=0, keepdim=True)
 
+        return dx
+
+class SoftmaxWithLoss:
+    def __init__(self):
+        self.loss = None
+        self.dout = None
+        self.x = None
+        self.y = None
+        self.t = None
+    
+    def forward(self, t, x):
+        """
+        Parameters
+        ----------
+        x : 実数を持つ行列(全結合の出力結果)
+        t : one-hotベクトルの多値分類結果
+            
+        Returns
+        -------
+        loss : 損失(スカラ)
+        """
+        self.t = t
+        self.y = softmax(x)
+        self.loss = cross_entropy(self.y, t)
+
+        return self.loss
+        
+    
+    def backward(self, dout=1):
+        """
+        Parameters
+        ----------
+        dout : 1
+        
+        
+        Returns
+        -------
+        dx : softmaxへの入力xの勾配
+             y - tを行うことでdxは0か負の実数値になる。
+             勾配降下法では、new_w = -now_w * η * (dL / dW)となる
+             dWが正の値であれば、new_wはwよりも小さくなる(減少する) → そのニューロンの出力を小さくしようとする
+             dWが負の値であれば、new_wはwよりも大きくなる(増加する) → そのニューロンの出力を大きくしようとする
+             
+             正解ラベルの出力値を予測するニューロンの重みを大きくしたいから、y - tで正解ラベルの勾配dxが0か負の実数値になるようにする。
+             そうすることで、dx = 0なら完璧な予測だから更新なし。負の値なら次回予測時に正解ラベルの予測値を大きくしにかかる
+        """
+        
+        N, D = dout.shape
+        
+        if self.t.size == self.y.size:
+            # t : one-hotベクトルの行列想定
+            dx = (self.y - self.t) / N
+        else:
+            # t : ラベルのベクトル想定
+            dx = self.y.copy()
+            dx[torch.arange(N), self.t] -= 1
+            dx = dx / N
+        
         return dx
         
 class Convolution:

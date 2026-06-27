@@ -1,6 +1,42 @@
 import torch 
 import numpy as np
 
+def softmax(x):
+    """
+    Parameters
+    ----------
+    x : 全結合での出力結果(N, D)
+    
+    Returns
+    -------
+    z : softmax適用後行列
+    """
+    x_max = x.max(dim=1, keepdim=True).values
+    x -= x_max
+    exp_x = torch.exp(x)
+    z = exp_x / exp_x.sum(dim=1, keepdim=True)
+    
+    return z
+
+def cross_entropy(y, t):
+    """
+    Parameters
+    ----------
+    y : 出力関数適用後行列 (N, D)
+    t : 正解ラベル(one-hot想定)
+    
+    Returns
+    -------
+    loss : バッチ平均をしたスカラ
+    """
+    N, D = y.shape
+    loss = - torch.log(y) * t
+    loss = loss.sum() * (1 / N)
+    
+    return loss
+
+
+
 def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
     """
     Parameters
