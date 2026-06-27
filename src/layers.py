@@ -98,9 +98,9 @@ class SoftmaxWithLoss:
         return dx
         
 class Convolution:
-    def __init__(self, W, b, stride=1, pad=0):
-        self.params = [W, b]
-        self.grads = [torch.zeros_like(W), torch.zeros_like(b)]
+    def __init__(self, weight, bias, stride=1, pad=0):
+        self.params = [weight, bias]
+        self.grads = [torch.zeros_like(weight), torch.zeros_like(bias)]
         self.stride = stride
         self.pad = pad
         
@@ -158,8 +158,10 @@ class Convolution:
 
         return dx
     
-class Pooling:
+class MaxPooling:
     def __init__(self, pool_h, pool_w, stride=2, pad=0):
+        self.params = []
+        self.grads = []
         self.pool_h = pool_h
         self.pool_w = pool_w
         self.stride = stride
@@ -186,9 +188,9 @@ class Pooling:
         dout = dout.permute(0, 2, 3, 1)
 
         pool_size = self.pool_h * self.pool_w
-        dmax = torch.zeros((dout.size, pool_size))
-        dmax[torch.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
-        dmax = dmax.reshape(dout.shape, (pool_size, ))
+        dmax = torch.zeros((dout.numel(), pool_size))
+        dmax[torch.arange(self.arg_max.numel()), self.arg_max.flatten()] = dout.flatten()
+        dmax = dmax.reshape(dout.shape + (pool_size, ))
 
         dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
