@@ -101,6 +101,11 @@ dout = sc.backward(out)
 # print(out.size(), out.shape)
 arg_max = torch.argmax(out, dim=1)
 
+# 重み、勾配を計算
+for i in range(len(sc.params)):
+    print(sc.params[i].shape)
+    print(sc.grads[i].shape)
+    
 # 畳み込み後の画像を出力
 # sample_conv_img = out[0]
 # beforeFig = plt.figure(figsize=(7, 5))
