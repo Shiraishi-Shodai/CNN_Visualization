@@ -1,0 +1,264 @@
+model:
+  name: VGG16
+  input_size: 150528        # (3,224,224)
+  output_size: 1000
+
+  layers:
+
+    # ==========================
+    # Block1
+    # ==========================
+
+    - type: Convolution
+      # (3,224,224) -> (64,224,224)
+      out_features: 3211264
+      in_channels: 3
+      out_channels: 64
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (64,224,224) -> (64,224,224)
+
+    - type: Convolution
+      # (64,224,224) -> (64,224,224)
+      out_features: 3211264
+      in_channels: 64
+      out_channels: 64
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (64,224,224) -> (64,224,224)
+
+    - type: MaxPooling
+      # (64,224,224) -> (64,112,112)
+      out_features: 802816
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Block2
+    # ==========================
+
+    - type: Convolution
+      # (64,112,112) -> (128,112,112)
+      out_features: 1605632
+      in_channels: 64
+      out_channels: 128
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (128,112,112) -> (128,112,112)
+
+    - type: Convolution
+      # (128,112,112) -> (128,112,112)
+      out_features: 1605632
+      in_channels: 128
+      out_channels: 128
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (128,112,112) -> (128,112,112)
+
+    - type: MaxPooling
+      # (128,112,112) -> (128,56,56)
+      out_features: 401408
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Block3
+    # ==========================
+
+    - type: Convolution
+      # (128,56,56) -> (256,56,56)
+      out_features: 802816
+      in_channels: 128
+      out_channels: 256
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (256,56,56) -> (256,56,56)
+
+    - type: Convolution
+      # (256,56,56) -> (256,56,56)
+      out_features: 802816
+      in_channels: 256
+      out_channels: 256
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (256,56,56) -> (256,56,56)
+
+    - type: Convolution
+      # (256,56,56) -> (256,56,56)
+      out_features: 802816
+      in_channels: 256
+      out_channels: 256
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (256,56,56) -> (256,56,56)
+
+    - type: MaxPooling
+      # (256,56,56) -> (256,28,28)
+      out_features: 200704
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Block4
+    # ==========================
+
+    - type: Convolution
+      # (256,28,28) -> (512,28,28)
+      out_features: 401408
+      in_channels: 256
+      out_channels: 512
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (512,28,28) -> (512,28,28)
+
+    - type: Convolution
+      # (512,28,28) -> (512,28,28)
+      out_features: 401408
+      in_channels: 512
+      out_channels: 512
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (512,28,28) -> (512,28,28)
+
+    - type: Convolution
+      # (512,28,28) -> (512,28,28)
+      out_features: 401408
+      in_channels: 512
+      out_channels: 512
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (512,28,28) -> (512,28,28)
+
+    - type: MaxPooling
+      # (512,28,28) -> (512,14,14)
+      out_features: 100352
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Block5
+    # ==========================
+
+    - type: Convolution
+      # (512,14,14) -> (512,14,14)
+      out_features: 100352
+      in_channels: 512
+      out_channels: 512
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (512,14,14) -> (512,14,14)
+
+    - type: Convolution
+      # (512,14,14) -> (512,14,14)
+      out_features: 100352
+      in_channels: 512
+      out_channels: 512
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (512,14,14) -> (512,14,14)
+
+    - type: Convolution
+      # (512,14,14) -> (512,14,14)
+      out_features: 100352
+      in_channels: 512
+      out_channels: 512
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+
+    - type: ReLU
+      # (512,14,14) -> (512,14,14)
+
+    - type: MaxPooling
+      # (512,14,14) -> (512,7,7)
+      out_features: 25088
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Fully Connected
+    # ==========================
+
+    - type: Flatten
+      # (512,7,7) -> (25088)
+      out_features: 25088
+
+    - type: Affine
+      # (25088) -> (4096)
+      out_features: 4096
+
+    - type: ReLU
+      # (4096) -> (4096)
+
+    - type: Affine
+      # (4096) -> (4096)
+      out_features: 4096
+
+    - type: ReLU
+      # (4096) -> (4096)
+
+    - type: Affine
+      # (4096) -> (1000)
+      out_features: 1000
+
+  loss:
+    type: SoftmaxWithLoss

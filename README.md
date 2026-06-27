@@ -1,4 +1,6 @@
 
+# VGG16を実装する(カーネルサイズがすべて3 × 3のバージョン)
+<img src="public\img\archtecher.png" alt="" height="600" />
 
 ## 設計方針
 
