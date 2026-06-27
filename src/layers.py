@@ -5,6 +5,8 @@ class ReLU:
     
     def __init__(self):
         self.x = None
+        self.params = []
+        self.grads = []
     
     def forward(self, x):
         """
@@ -17,24 +19,25 @@ class ReLU:
 
 class Affine:
     def __init__(self, W, b):
-        self.W = W
-        self.b = b
+        self.params = [W, b]
+        self.grads = [torch.zeros_like(W), torch.zeros_like(b)]
         self.x = None
-        
-        self.dW = None
-        self.db = None
     
     def forward(self, x):
-        out = x @ self.W + self.b
+        W, b = self.params
+        out = x @ W + b
         self.x = x
         
         return out
 
     def backward(self, dout):
-        dx = dout @ self.W.T
-        self.dW = self.x.T @ dout
-        self.db = torch.sum(dout, dim=0, keepdim=True)
+        W, b = self.params
+        dx = dout @ W.T
+        dW = self.x.T @ dout
+        db = torch.sum(dout, dim=0, keepdim=True)
 
+        self.grads[0][...] = dW
+        self.grads[1][...] = db
         return dx
 
 class SoftmaxWithLoss:

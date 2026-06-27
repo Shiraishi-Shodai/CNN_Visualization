@@ -1,5 +1,5 @@
 [project]
-name = "matsuodlbase"
+name = "cnn_visualization"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"

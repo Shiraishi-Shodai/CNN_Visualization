@@ -1,11 +1,11 @@
 import math
-from layers import Convolution
+from src.layers import Convolution
 import torch
 from torchvision import transforms, datasets
 # print(math.floor(1.2), math.floor(-1.2))
 from matplotlib import pyplot as plt
 import japanize_matplotlib
-from utils import col2im
+from src.utils import col2im
 
 seed = 42
 

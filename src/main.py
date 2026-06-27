@@ -1,7 +1,7 @@
 import math
-from layers import Affine, ReLU
+from src.layers import Affine, ReLU
 import torch
-from utils import softmax, cross_entropy_error
+from src.utils import softmax, cross_entropy_error
 
 torch.manual_seed(42)
 

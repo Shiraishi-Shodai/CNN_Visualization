@@ -6,7 +6,6 @@ class SimpleCNN:
         
         self.layers = []
         
-        
     
     def forward(self, x):
         for layer in self.layers:

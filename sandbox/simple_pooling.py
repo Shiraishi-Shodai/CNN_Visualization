@@ -1,5 +1,5 @@
 import math
-from layers import Pooling
+from src.layers import Pooling
 import torch
 from torchvision import transforms, datasets
 # print(math.floor(1.2), math.floor(-1.2))
