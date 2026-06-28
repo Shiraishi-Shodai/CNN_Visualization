@@ -58,7 +58,7 @@ def accuracy(pred, t):
     N = len(pred)
     score = (pred == t).sum() / N
     
-    return score
+    return score.detach().item()
 
 def cross_entropy_error(y, t):
     if y.ndim == 1:

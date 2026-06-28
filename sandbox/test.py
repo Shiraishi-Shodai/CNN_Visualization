@@ -18,3 +18,10 @@
     
     # print(y)
     # print(dx)
+    
+import torch
+
+x = torch.randint(1, 10, (10,)).reshape(2, -1)
+print(x)
+
+print(x.argmax(dim=1))
