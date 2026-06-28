@@ -116,5 +116,7 @@ for step in range(3):
     model_gpu.backward(dx)
     optimizer.update(model_gpu.params, model_gpu.grads)
     
-    for cpu_param, gpu_param in zip(model_cpu.params, model_gpu.params):
-        print(CPUGPUvalueCheck(cpu_param, gpu_param.cpu()))
+    # for cpu_param, gpu_param in zip(model_cpu.params, model_gpu.params):
+        # print(CPUGPUvalueCheck(cpu_param, gpu_param.cpu()))
+    
+    print(cpu_loss, gpu_loss)

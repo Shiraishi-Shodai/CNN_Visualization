@@ -291,6 +291,11 @@ model:
     - type: ReLU
       # (4096) -> (4096)
 
+    - type: Dropout
+    # (4096) -> (4096)
+      out_features: 4096
+      dropout_rate : 0.5
+
     - type: Affine
       # (4096) -> (4096)
       out_features: 4096
@@ -300,9 +305,14 @@ model:
 
     - type: ReLU
       # (4096) -> (4096)
+    
+    - type: Dropout
+    # (4096) -> (4096)
+      out_features: 4096
+      dropout_rate : 0.5
 
     - type: Affine
-      # (4096) -> (1000)
+      # (4096) -> (10)
       out_features: 10
       initializer : 
         weight : "he"
