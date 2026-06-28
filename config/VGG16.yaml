@@ -1,7 +1,7 @@
 model:
   name: VGG16
   input_size: 150528        # (3,224,224)
-  output_size: 1000
+  output_size: 10
 
   layers:
 

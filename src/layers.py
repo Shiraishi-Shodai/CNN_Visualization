@@ -1,18 +1,7 @@
 import torch
 from utils import im2col, col2im, softmax, cross_entropy_error
 
-class Layer:
-    
-    def __init__(self):
-        self.params = []
-        self.grads = []
-
-    def to(self, device):
-        for i in range(len(self.params)):
-            self.params[i] = self.params[i].clone().to(device)
-            self.grads[i] = self.grads[i].clone().to(device)
-    
-class ReLU(Layer):
+class ReLU():
     
     def __init__(self):
         self.x = None
@@ -97,7 +86,7 @@ class SoftmaxWithLoss:
         
         N, D = dout.shape
         
-        if self.t.size == self.y.size:
+        if self.t.size() == self.y.size():
             # t : one-hotベクトルの行列想定
             dx = (self.y - self.t) / N
         else:
@@ -142,7 +131,6 @@ class Convolution:
 
         col = im2col(x, FH, FW, self.stride, self.pad)             # (batch_size * out_h * out_w, C * FH * FW)
         col_W = weight.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
-        print(col.device, col_W.device, bias.device)
         out = col @ col_W + bias                                 # (batch_size * out_h * out_w, C * FH * FW) @ (C * FH * FW, FN) = (batch_size * out_h * out_w, FN)
         out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2) # (batch_size * out_h * out_w, FN) → (batch_size, FN, out_h, out_w)
         

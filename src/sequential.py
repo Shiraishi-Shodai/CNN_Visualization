@@ -49,8 +49,8 @@ class Sequential:
         
         for layer in self.layers:
             for i in range(len(layer.params)):
-                layer.params[i] = layer.params[i].clone().to(device)
-                layer.grads[i] = layer.grads[i].clone().to(device)
+                layer.params[i] = layer.params[i].to(device)
+                layer.grads[i] = layer.grads[i].to(device)
     
     def forward(self, x):
         for layer in self.layers:
