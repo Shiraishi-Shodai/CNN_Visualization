@@ -3,7 +3,9 @@
 <img src="public\img\archtecher.png" alt="" height="600" />
 
 ## パラメータ数(重みをもつレイヤーが16層あるからVGG16, MaxPoolingやReLU, Dropoutはカウントしない)
-**合計パラメータ数 : 134,301,514**
+**合計パラメータ数 : 134,301,514**  
+他にも各レイヤーで逆伝搬のために保持する特徴マップが存在するため、
+パラメータは膨大になる。(むしろ各レイヤー内部で保持する行列の方が巨大)
 
 | 層 | パラメータ | パラメータ数
 | ---- | ---- | ---- |
@@ -42,32 +44,46 @@
 YAML
    │
    ▼
-ConfigLoader
+ConfigLoad
+   │
+   ▼
+DataLoader
    │
    ▼
 ModelBuilder
    │
-   ├── Layer Registry
-   ├── Initializer Registry
-   └── Loss Registry
+   ▼
+InitializerRegistry
+   │
+   ▼
+LayerRegistry
+   │
+   ▼
+List[Layer] を生成
+   │
+   ▼
+Sequential
    │
    ▼
 Model
-
-    model.yaml
-        │
-        ▼
-ModelBuilder
-        │
-List[Layer] を生成
-        │
-        ▼
-Sequential
-        │
-forward / backward
-        │
-        ▼
-    Optimizer
+   │
+   ▼
+Criterion
+   │
+   ▼
+Optimizer
+   │
+   ▼
+Trainer
+   │
+   ▼
+Train / Evaluate / Test
+   │
+   ▼
+{Train : Params Update(backward → Optimizer.update(params, grads))}
+   │
+   ▼
+Score / Loss
 ```
 
 ### モデルビルダーの役割
