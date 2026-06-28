@@ -67,7 +67,7 @@ $$
 OutputW = \frac{(InputW + padding * 2) - kernel_w}{stride} + 1
 $$
 $$
-OutputH = \frac{(kernel_h - padding * 2) - kernel_h}{stride} + 1
+OutputH = \frac{(InputH + padding * 2) - kernel_h}{stride} + 1
 $$
 
 ## Pooling(プーリング)ってなに？何ができるの？
@@ -88,13 +88,21 @@ $$
 ---
 分割した領域内でざっくり特徴を抽出するから、領域内のデータの位置のずれを吸収できるよ
 
+### 畳み込み後の画像サイズの計算方法
+---
+$$
+OutputW = \frac{(InputW + padding * 2) - kernel_w}{stride} + 1
+$$
+$$
+OutputH = \frac{(InputH + padding * 2) - kernel_h}{stride} + 1
+$$
+
 ## 畳み込み・プーリング 関連語句
 ---
 - パディング : 畳み込みやプーリングを行うことによる画像の縮小を抑えるために、畳み込みやプーリング前に入力画像を一定の規則に従って大きくするよ。  
 - ストライド : 畳み込みやプーリングを行う間隔をコントロールするよ。  
   ストライドが大きいほど大雑把に特徴を抽出を行うよ。
----
-全結合
+
 #### VGG16ハイパーパラメータ
 - kernel : (out_channels, in_channel, 3, 3)
 - bias : (out_channels)
