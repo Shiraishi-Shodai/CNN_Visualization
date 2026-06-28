@@ -303,7 +303,7 @@ model:
 
     - type: Affine
       # (4096) -> (1000)
-      out_features: 1000
+      out_features: 10
       initializer : 
         weight : "he"
         bias : "zeros"

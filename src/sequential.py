@@ -55,7 +55,7 @@ class Sequential:
     def forward(self, x):
         for layer in self.layers:
             x = layer.forward(x)
-        
+            
         return x
     
     def backward(self, dout=1):

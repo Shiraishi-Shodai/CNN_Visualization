@@ -62,7 +62,7 @@ def CPUGPUvalueCheck(cpu_data, gpu_data):
         atol=1e-6
     )
 
-    error_check = torch.max(torch.abs(cpu_data - gpu_data.cpu()))
+    error_check = torch.max(torch.abs(cpu_data - gpu_data))
     
     return allclose_check, error_check
 
@@ -81,7 +81,7 @@ def CPUGPUvalueCheck(cpu_data, gpu_data):
 # print(CPUGPUvalueCheck(cpu_out, gpu_out.cpu()))
 # print(CPUGPUvalueCheck(cpu_dout, gpu_dout.cpu()))
 
-"""学習ループのチェック"""
+"""学習ループ時のパラメータチェック"""
 model_cpu = Sequential(copy.deepcopy(layers)) # 深いコピー
 model_cpu.to("cpu")
 model_gpu = Sequential(copy.deepcopy(layers)) # 深いコピー
@@ -92,10 +92,10 @@ model_gpu.to("cuda")
 #         print(cpu_param.device, gpu_param.device)
 
 x_cpu = torch.randn((3, 3, 224, 224)).to("cpu")
-t_cpu = torch.tensor([8, 1, 4]).to("cpu")
+t_cpu = torch.tensor([8, 1, 4]).to(device="cpu", dtype=torch.long)
 
 x_gpu = torch.randn((3, 3, 224, 224)).to("cuda")
-t_cpu = torch.tensor([8, 1, 4]).to("cuda")
+t_gpu = torch.tensor([8, 1, 4]).to(device="cuda", dtype=torch.long)
 
 cpu_criterion = SoftmaxWithLoss()
 gpu_criterion = SoftmaxWithLoss()
@@ -103,12 +103,18 @@ gpu_criterion = SoftmaxWithLoss()
 optimizer = SGD(lr=0.01)
 
 for step in range(3):
+    
     cpu_out = model_cpu.forward(x_cpu)
     cpu_loss = cpu_criterion.forward(cpu_out, t_cpu)
     cpu_dout = cpu_criterion.backward()
     cpu_dx = model_cpu.backward(cpu_dout)
     optimizer.update(model_cpu.params, model_cpu.grads)
     
-    print(model_cpu.params)
+    gpu_out = model_gpu.forward(x_gpu)
+    gpu_loss = gpu_criterion.forward(gpu_out, t_gpu)
+    dx = gpu_criterion.backward()
+    model_gpu.backward(dx)
+    optimizer.update(model_gpu.params, model_gpu.grads)
     
-## flattenを2次元に直す！！！！
+    for cpu_param, gpu_param in zip(model_cpu.params, model_gpu.params):
+        print(CPUGPUvalueCheck(cpu_param, gpu_param.cpu()))

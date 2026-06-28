@@ -48,7 +48,7 @@ class SoftmaxWithLoss:
         self.y = None
         self.t = None
     
-    def forward(self, t, x):
+    def forward(self, x, t):
         """
         Parameters
         ----------
@@ -84,16 +84,16 @@ class SoftmaxWithLoss:
              そうすることで、dx = 0なら完璧な予測だから更新なし。負の値なら次回予測時に正解ラベルの予測値を大きくしにかかる
         """
         
-        N, D = dout.shape
+        N, D = self.y.shape
         
         if self.t.size() == self.y.size():
             # t : one-hotベクトルの行列想定
-            dx = (self.y - self.t) / N
+            dx = dout * (self.y - self.t) / N
         else:
             # t : ラベルのベクトル想定
-            dx = self.y.copy()
+            dx = self.y.clone()
             dx[torch.arange(N), self.t] -= 1
-            dx = dx / N
+            dx = dout * dx / N
         
         return dx
         
