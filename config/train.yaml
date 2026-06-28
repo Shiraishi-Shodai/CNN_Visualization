@@ -1,8 +1,8 @@
 train:
   name : VGG16Cifar10
   batch_size : 16
-  max_epochs : 1
+  max_epochs : 10
   verbose : 5
   lr : 0.05
-  subset : 100
+  subset : 50
   sample : True
