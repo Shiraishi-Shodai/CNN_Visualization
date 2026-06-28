@@ -1,7 +1,18 @@
 import torch
 from utils import im2col, col2im, softmax, cross_entropy_error
 
-class ReLU:
+class Layer:
+    
+    def __init__(self):
+        self.params = []
+        self.grads = []
+
+    def to(self, device):
+        for i in range(len(self.params)):
+            self.params[i] = self.params[i].clone().to(device)
+            self.grads[i] = self.grads[i].clone().to(device)
+    
+class ReLU(Layer):
     
     def __init__(self):
         self.x = None
@@ -131,7 +142,7 @@ class Convolution:
 
         col = im2col(x, FH, FW, self.stride, self.pad)             # (batch_size * out_h * out_w, C * FH * FW)
         col_W = weight.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
-
+        print(col.device, col_W.device, bias.device)
         out = col @ col_W + bias                                 # (batch_size * out_h * out_w, C * FH * FW) @ (C * FH * FW, FN) = (batch_size * out_h * out_w, FN)
         out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2) # (batch_size * out_h * out_w, FN) → (batch_size, FN, out_h, out_w)
         
@@ -188,10 +199,9 @@ class MaxPooling:
         dout = dout.permute(0, 2, 3, 1)
 
         pool_size = self.pool_h * self.pool_w
-        dmax = torch.zeros((dout.numel(), pool_size))
+        dmax = torch.zeros((dout.numel(), pool_size), device=dout.device, dtype=dout.dtype)
         dmax[torch.arange(self.arg_max.numel()), self.arg_max.flatten()] = dout.flatten()
         dmax = dmax.reshape(dout.shape + (pool_size, ))
-
         dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
 
@@ -220,4 +230,22 @@ class Flatten:
     def backward(self, dout):
         return dout.reshape(self.original_shape)
         
+
+class Dropout:
+    def __init__(self, dropout_rate):
+        self.params = []
+        self.grads = []
+        self.dropout_rate = dropout_rate
+        self.mask = None
+    
+    def forward(self, x, mode="train"):
         
+        if mode == "train":
+            self.mask = self.dropout_rate > torch.rand_like(x)
+            return x * self.mask
+        else:
+            return x * (1.0 - self.dropout_rate)
+    
+    def backward(self, dout):
+        return dout * self.mask
+    

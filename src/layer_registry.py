@@ -124,3 +124,19 @@ def build_relu(layer_cfg, fan_in):
     """
     fan_out = layer_cfg["out_features"]
     return Flatten(), fan_out
+
+@register("Dropout")
+def build_relu(layer_cfg, fan_in):
+    """Dropoutを生成する
+    Parameters
+    ----------
+    layer_cfg : layerのconfig
+    fan_in : 入力値の次元数(ニューロン数)
+    
+    Returns
+    -------
+    layer : 生成したlayer
+    """
+    fan_out = fan_in
+    dropout_rate = layer_cfg["dropout_rate"]
+    return Dropout(dropout_rate), fan_out

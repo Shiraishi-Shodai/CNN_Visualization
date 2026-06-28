@@ -307,6 +307,3 @@ model:
       initializer : 
         weight : "he"
         bias : "zeros"
-        
-  loss:
-    type: SoftmaxWithLoss

@@ -9,7 +9,7 @@ class SGD:
         
     def update(self, params, grads):
         for i in range(len(params)):
-            params[i] -= self.lr * grads[i]
+            params[i].data -= self.lr * grads[i]
             print(params[i])
 
     

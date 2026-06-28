@@ -70,7 +70,7 @@ def cross_entropy_error(y, t):
         t = t.argmax(axis=1)
 
     N = y.shape[0]
-    return -torch.sum(np.log(y[np.arange(N), t] + 1e-7)) / N  
+    return -torch.sum(torch.log(y[torch.arange(N), t] + 1e-7)) / N  
 
 
 
@@ -95,9 +95,17 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
     out_h = (H + pad * 2 - filter_h) // stride + 1
     out_w = (W + pad * 2 - filter_w) // stride + 1
     
-    img = torch.tensor(np.pad(input_data, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant'))
-    col = torch.zeros((N, C, filter_h, filter_w, out_h, out_w))
-    
+    # ゼロパディング
+    # img = torch.tensor(np.pad(input_data, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant'))
+    if pad == 0:
+        img = input_data
+    elif pad > 0:
+        img = torch.zeros(N, C, H + pad * 2, W + pad * 2, device=input_data.device, dtype=input_data.dtype)
+        img[:, :, pad : -pad , pad : -pad] = input_data
+    else:
+        raise ValueError("負の値がpaddingとして与えられました。padding : {pad}")
+
+    col = torch.zeros((N, C, filter_h, filter_w, out_h, out_w), device=input_data.device, dtype=input_data.dtype)
     y_max = 0
     x_max = 0
     
@@ -133,7 +141,7 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
     out_w = (H + pad * 2 - filter_w) // stride + 1
     col = col.reshape(N, out_h, out_w, C, filter_h, filter_w).permute(0, 3, 4, 5, 1, 2)
 
-    img = torch.zeros((N, C, H + 2 * pad + stride - 1, W + 2 * pad + stride - 1))
+    img = torch.zeros((N, C, H + 2 * pad + stride - 1, W + 2 * pad + stride - 1), device=col.device, dtype=col.dtype)
 
     for y in range(filter_h):
         y_max = y + stride * out_h

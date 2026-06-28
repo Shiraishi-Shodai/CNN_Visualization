@@ -24,12 +24,33 @@ class Sequential:
     """
     def __init__(self, layers : list):
         self.layers = layers
-        self.params = []
-        self.grads = []
-
+        self.device = None
+    
+    @property
+    def params(self):
+        params = []
         for layer in self.layers:
-            self.params += layer.params
-            self.grads += layer.grads
+            params += layer.params
+        
+        return params
+
+    @property
+    def grads(self):
+        grads = []
+        for layer in self.layers:
+            grads += layer.grads
+        
+        return grads
+    
+    def to(self, device):
+        """各レイヤーにdeviceをセットする
+        """
+        self.device = device
+        
+        for layer in self.layers:
+            for i in range(len(layer.params)):
+                layer.params[i] = layer.params[i].clone().to(device)
+                layer.grads[i] = layer.grads[i].clone().to(device)
     
     def forward(self, x):
         for layer in self.layers:
