@@ -213,3 +213,20 @@ ModelBuilder
 ├── Layerを生成する
 └── Modelを返す
 ```
+
+### hook
+Trainer
+    │
+    ├── Recorder
+    │
+    └── Model
+          │
+          ├── Conv1
+          │      ↓
+          │    hook(output)
+          │
+          ├── Conv2
+          │      ↓
+          │    hook(output)
+          │
+          └── ...

@@ -1,4 +1,4 @@
-
+from hook_manager import HookManager
 class Sequential:
     """生成したレイヤーをリストで受け取り、モデルをインスタンス化するためのクラス
         YAML
@@ -25,6 +25,7 @@ class Sequential:
     def __init__(self, layers : list):
         self.layers = layers
         self.device = None
+        self.hooks = HookManager()
     
     @property
     def params(self):
@@ -56,6 +57,7 @@ class Sequential:
         for layer in self.layers:
             x = layer.forward(x)
             
+            self.hooks.call_forward_hooks(layer, x)
         return x
     
     def backward(self, dout=1):

@@ -21,7 +21,20 @@
     
 import torch
 
-x = torch.randint(1, 10, (10,)).reshape(2, -1)
-print(x)
+# x = torch.randint(1, 10, (10,)).reshape(2, -1)
+# print(x)
 
-print(x.argmax(dim=1))
+# print(x.argmax(dim=1))
+
+x = [1, 2]
+b = [[3, 1]]
+c = [[[4, 5, 6]]]
+x += b
+x += c
+
+y = []
+g = [[1, 2]]
+h = [[[3, 4]]]
+y += g
+y += h
+print(x, y)

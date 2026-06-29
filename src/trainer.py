@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 class Trainer:
 
-    def __init__(self, model, optimizer, criterion, device):
+    def __init__(self, model, optimizer, criterion, device, hook):
         """ハイパーパラメータの初期化
         """
         self.model = model
@@ -16,6 +16,7 @@ class Trainer:
             "loss" : []
         }
     
+        self.model.hooks.register_forward_hook(hook)
     # def fit(self, train_loader, max_epochs=100, verbose=100):
     #     """学習処理
     #     Parameters

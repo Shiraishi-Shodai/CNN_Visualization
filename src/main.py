@@ -9,6 +9,7 @@ from torchvision import transforms, datasets
 from trainer import Trainer
 from model_builder import ModelBuilder
 from torch.utils.data import Subset
+from recorder import Recorder
 
 torch.manual_seed(42)
 
@@ -58,7 +59,9 @@ def main():
     model.to(device)
     optimizer = SGD(train_config["lr"])
     criterion = SoftmaxWithLoss()
-    trainer = Trainer(model, optimizer, criterion, device)
+    recorder = Recorder()
+    hook = recorder.forward_hook
+    trainer = Trainer(model, optimizer, criterion, device, hook)
     
     # 学習
     trainer.fit(train_loader=train_loader, max_epochs=train_config["max_epochs"])

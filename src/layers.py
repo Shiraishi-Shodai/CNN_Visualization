@@ -230,6 +230,7 @@ class Dropout:
         
         if mode == "train":
             self.mask = self.dropout_rate > torch.rand_like(x)
+
             return x * self.mask
         else:
             return x * (1.0 - self.dropout_rate)
