@@ -12,5 +12,8 @@ class Recorder:
     def __init__(self):
         pass
     
-    def forward_hook(self, layer, output):
-        print(layer, output.shape)
+    def forward_hook(self, layer, out):
+        print(f"順伝搬{layer, out.shape}")
+
+    def backward_hook(self, layer, dout):
+        print(f"逆伝搬{layer, dout.shape}")
