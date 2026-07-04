@@ -159,8 +159,9 @@ def tensor_to_display_image(tensor_img):
     ---------
     tensor_img : (C, H, W)
     """
+    print(tensor_img.shape)
     C = tensor_img.shape[0]
-    display_img = tensor_img.permute(1, 2, 0).detach().cpu().numpy()
+    display_img = tensor_img.permute(1, 2, 0).numpy()
     
     match C:
         case 3:
@@ -168,7 +169,7 @@ def tensor_to_display_image(tensor_img):
         case 1:
             display_img = display_img.squeeze(2)
         case _:
-            display_img = display_img.mean(dim=2)
+            display_img = display_img.mean(axis=2)
         
     return display_img
 
@@ -204,7 +205,7 @@ def plot_imgs(data, num_cols, save_filename):
             if idx >= N :
                 fig.delaxes(axes[r, c]) # 描画する画像の枚数よりも大きなidxを持つaxは一つずつ削除
                 continue
-            tensor_img = data[idx].output
+            tensor_img = data[idx].output_tensor[0]
 
             display_img = tensor_to_display_image(tensor_img) # 描画用画像を取得
             channel_nums = display_img.shape[0] # cmapを取得

@@ -21,14 +21,13 @@ class Recorder:
         """input画像は3チャンネル。その他の画像はチャンネル方向に平均した画像を格納
         """
         ctx = LayerRecord(
-            layer_name=layer_name,
+            name=layer_name,
             input_tensor=input_tensor,
             output_tensor=output_tensor,
             input_shape=input_tensor.shape,
             output_shape=output_tensor.shape
         )
         self.forward_feature_maps.append(ctx)
-        # print(f"順伝搬{layer.__class__.__name__, ctx.inputs.shape, ctx.outputs.shape}")
 
     def backward_hook(self, layer, dout):
         print(f"逆伝搬{layer, dout.shape}")
@@ -38,7 +37,7 @@ class Recorder:
         self.trainer_metadata = metadata
     
     def end_forward(self):
-        torch.save(self.forward_feature_maps, rf"public/pt/{self.trainer_metadata.model_name}_{self.trainer_metadata.mode}_epoch{self.trainer_metadata.epoch}_batch{self.trainer_metadata.batch}.pt")
+        torch.save(self.forward_feature_maps, rf"public/pt/{self.trainer_metadata.name}_{self.trainer_metadata.mode}_epoch{self.trainer_metadata.epoch}_batch{self.trainer_metadata.batch}.pt")
         self.forward_feature_maps = []
     
     @contextmanager
