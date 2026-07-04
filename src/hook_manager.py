@@ -1,4 +1,4 @@
-
+from contextlib import contextmanager
 class HookManager:
     def __init__(self):
         self.forward_hooks = []
@@ -51,3 +51,15 @@ class HookManager:
         """
         for hook in self.forward_hooks:
             hook(layer, output)
+    
+    @contextmanager
+    def register(self, hooks, enable=True):
+        if not enable:
+            yield
+            return
+        
+        self.register_all_forward_hooks(hooks)
+        try:
+            yield
+        finally:
+            self.unregister_all_forward_hooks()

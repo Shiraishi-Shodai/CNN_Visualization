@@ -122,20 +122,15 @@ class Trainer:
             t = t.to(self.device)
             
             with self.recorder.record(TrainerMetadata("VGG16", mode, self.current_epoch, self.trainer_config["batch_size"]), self.should_record):
-                if self.should_record:
-                    self.model.hook_manager.register_all_forward_hooks([self.recorder.forward_hook])
+                with self.model.hook_manager.register([self.recorder.forward_hook], self.should_record):
                 # Train or Evaluate, Testの1エポック分の処理を実行
-                if train:
-                    pred, loss = self._train_step(x, t)
-                else:
-                    pred, loss = self._eval_step(x, t)
+                    if train:
+                        pred, loss = self._train_step(x, t)
+                    else:
+                        pred, loss = self._eval_step(x, t)
 
-                self.should_record = False
+                    self.should_record = False
                 
-                if self.should_record:
-                    self.model.hook_manager.unregister_all_forward_hooks()
-                
-            
             score = accuracy(pred, t)
             epoch_loss += loss
             epoch_accuracy += score
