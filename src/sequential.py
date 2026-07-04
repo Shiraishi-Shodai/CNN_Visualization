@@ -1,4 +1,6 @@
 from hook_manager import HookManager
+from forward_hook_context import ForwardHookContext
+from backward_hook_context import BackwardHookContext
 class Sequential:
     """生成したレイヤーをリストで受け取り、モデルをインスタンス化するためのクラス
         YAML
@@ -22,11 +24,11 @@ class Sequential:
     ├── model.backward(dout)
     └── optimizer.update(...)
     """
-    def __init__(self, layers : list):
+    def __init__(self, layers : list, hook_manager : HookManager):
         self.layers = layers
         self.device = None
-        self.hooks = HookManager()
-    
+        self.hook_manager = hook_manager
+
     @property
     def params(self):
         params = []
@@ -54,10 +56,19 @@ class Sequential:
                 layer.grads[i] = layer.grads[i].to(device)
     
     def forward(self, x):
+        ctx = None
+        y = None
         for layer in self.layers:
-            x = layer.forward(x)
+            y = layer.forward(x)
+            ctx = ForwardHookContext(
+                layer=layer,
+                inputs=x.clone(),
+                outputs=y.clone()
+            )
             
-            self.hooks.call_forward_hooks(layer, x)
+            x = y
+            
+            self.hook_manager.call_forward_hooks(layer, ctx)
         return x
     
     def backward(self, dout=1):

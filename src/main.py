@@ -10,6 +10,7 @@ from trainer import Trainer
 from model_builder import ModelBuilder
 from torch.utils.data import Subset
 from recorder import Recorder
+from hook_manager import HookManager
 
 torch.manual_seed(42)
 
@@ -53,19 +54,22 @@ def main():
     # sample_x, sample_t = sample[0], sample[1]
     
     # Trainerの定義
-    mb = ModelBuilder(model_config)
-    layers = mb.build()
-    model = Sequential(layers)
-    model.to(device)
     optimizer = SGD(train_config["lr"])
     criterion = SoftmaxWithLoss()
     recorder = Recorder()
-    hook = recorder.forward_hook
-    trainer = Trainer(model, optimizer, criterion, device, hook)
+    hooks = []
+    hooks.append(recorder.forward_hook)
+    hook_manager = HookManager()
+    hook_manager.register_all_forward_hooks(hooks)
+    mb = ModelBuilder(model_config)
+    layers = mb.build()
+    model = Sequential(layers, hook_manager)
+    model.to(device)
+    trainer = Trainer(model, optimizer, criterion, device)
     
     # 学習
     trainer.fit(train_loader=train_loader, max_epochs=train_config["max_epochs"])
-
+    # recorder
 
 if __name__ == "__main__":
     main()

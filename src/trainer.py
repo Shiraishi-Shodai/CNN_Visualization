@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 class Trainer:
 
-    def __init__(self, model, optimizer, criterion, device, hook):
+    def __init__(self, model, optimizer, criterion, device):
         """ハイパーパラメータの初期化
         """
         self.model = model

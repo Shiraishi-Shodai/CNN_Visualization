@@ -27,8 +27,8 @@ class HookManager:
         for hook in backward_hooks:
             self._register_backward_hook(hook)
             
-    def call_forward_hooks(self, layer, output):
-        """順伝搬時のhookをすべて呼び出す
+    def call_forward_hooks(self, layer, ctx):
+        """順伝搬時のhookをすべて呼び出す(レイヤーの出力に対するhooks)
         Parameter
         ---------
         layer : モデルのレイヤー
@@ -36,7 +36,7 @@ class HookManager:
         
         """
         for hook in self.forward_hooks:
-            hook(layer, output)
+            hook(layer, ctx)
     
     def call_backward_hook(self, layer, output):
         """逆伝搬時のhookをすべて呼び出す
