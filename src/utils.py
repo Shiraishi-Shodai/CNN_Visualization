@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from yaml import safe_load
 from pathlib import Path
+import math
+from matplotlib import pyplot as plt
 
 def load_yaml(yaml_file : Path):
     """yamlの読み込み
@@ -150,4 +152,30 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
             img[:, :, y:y_max:stride, x:x_max:stride] += col[:, :, y, x, :, :]
     
     return img[:, :, pad:H + pad, pad:W + pad]
+
+def plot_imgs(data, num_cols, save_filename):
+    """取得した画像分描画する
+    Parameter
+    ---------
+    imgs : list[dataclass] dataclass(name, output)
+    num_cols : 横方向に描画する画像の枚数
+    save_filename : 保存するファイル名
+    """
     
+    N = len(data) # 描画する画像の枚数
+    rows = math.ceil(N / num_cols) # 余りも含めて表示できる行数
+
+    fig, axes = plt.subplots(rows, num_cols)
+
+    # プロット時は余りのデータまで
+    for r in range(rows):
+        for c in range(num_cols):
+            idx = r * num_cols + c
+            if idx >= N :
+                fig.delaxes(axes[r, c]) # 描画する画像の枚数よりも大きなidxを持つaxは一つずつ削除
+                continue
+            axes[r, c].imshow(data[idx].output.permute(1, 2, 0).detach().numpy())
+            axes[r, c].set_title(data[idx].name)
+            axes[r, c].axis("off")
+    fig.tight_layout() # 各axisが重ならないように設定
+    plt.savefig(save_filename)

@@ -4,7 +4,7 @@
 #     save_forward: true
 #     save_backward: true
 #     max_samples: 10
-from matplotlib import pyplot as plt
+from utils import plot_imgs
 class Recorder:
     """
     順伝搬, 逆伝搬用のデータを記録する
@@ -27,4 +27,8 @@ class Recorder:
         
     
     def plot_forward_feature_map(self):
+        pass
+
+    def forward_plot(self):
+        # plot_imgs(self.forward_feature_maps)
         pass

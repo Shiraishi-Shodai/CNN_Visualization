@@ -23,6 +23,8 @@ import torch
 from matplotlib import pyplot as plt
 from torchvision import datasets, transforms
 import math
+from utils import plot_imgs
+from dataclasses import dataclass
 
 train_data = datasets.CIFAR10(
     root="data/cifar10", 
@@ -66,32 +68,31 @@ PLOT_NUM = 4
 # print(x)
 # print(y)
 
-def plot_data():
-    sample_data = next(iter(train_loader))
-    sample_imgs = sample_data[0]
-    sample_labels = sample_data[1]
-    print(sample_labels)
-    N, C, H, W = sample_imgs.shape
-    print(N, C, H, W)
-    rows = math.ceil(N / PLOT_NUM) # 余りも表示せれる行数
-
-
-    fig, axes = plt.subplots(rows, PLOT_NUM)
-    print(axes, type(axes))
-
-    # プロット時は余りのデータまで
-    for r in range(rows):
-        for c in range(PLOT_NUM):
-            idx = r * PLOT_NUM + c
-            if idx >= N :
-                break
-            print(sample_imgs[idx].shape, sample_labels[idx])
-            axes[r, c].imshow(sample_imgs[idx].permute(1, 2, 0).detach().numpy())
-            axes[r, c].axis("off")
-
-    plt.show()
+sample_data = next(iter(train_loader))
+sample_imgs = sample_data[0]
+sample_labels = sample_data[1]
+# print(sample_labels)
 # print(sample_data)
 # print(math.ceil(4/3), type(math.ceil(4/3)))
 # print(type(sample_data))
 # print(sample_data[0].shape)
 
+# print(len(sample_imgs))
+
+feature_imgs = []
+classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
+@dataclass
+class SampleClass:
+    name : str
+    output : torch.Tensor
+
+for i in range(len(sample_labels)):
+    img, label = sample_imgs[i], sample_labels[i]
+    ctx = SampleClass(classes[label], img)
+    feature_imgs.append(ctx)
+
+for i in feature_imgs:
+    print(f"name : {i.name}, {i.output.shape}")
+
+plot_imgs(feature_imgs, PLOT_NUM, "public/img/plot_imgs.png")
