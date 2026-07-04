@@ -22,7 +22,7 @@ def main():
 
     # ハイパーパラメータの読み込み
     model_config = load_yaml("config/VGG16.yaml")
-    train_config = load_yaml("config/train.yaml")["train"]
+    trainer_config = load_yaml("config/train.yaml")["train"]
 
     # transformの定義
     transform = transforms.Compose([
@@ -40,11 +40,11 @@ def main():
     
     classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     
-    train_subset = Subset(train_data, list(range(train_config["subset"]))) if train_config["sample"] else train_data
+    train_subset = Subset(train_data, list(range(trainer_config["subset"]))) if trainer_config["sample"] else train_data
     # data loaderの作成
     train_loader = torch.utils.data.DataLoader(
         train_subset,
-        batch_size=train_config["batch_size"],
+        batch_size=trainer_config["batch_size"],
         shuffle=True
         )
     
@@ -54,22 +54,19 @@ def main():
     # sample_x, sample_t = sample[0], sample[1]
     
     # Trainerの定義
-    optimizer = SGD(train_config["lr"])
+    optimizer = SGD(trainer_config["lr"])
     criterion = SoftmaxWithLoss()
     recorder = Recorder()
-    hooks = []
-    hooks.append(recorder.forward_hook)
     hook_manager = HookManager()
-    hook_manager.register_all_forward_hooks(hooks)
     mb = ModelBuilder(model_config)
     layers = mb.build()
     model = Sequential(layers, hook_manager)
     model.to(device)
-    trainer = Trainer(model, optimizer, criterion, device)
+    trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder)
     
     # 学習
-    trainer.fit(train_loader=train_loader, max_epochs=train_config["max_epochs"])
+    trainer.fit(train_loader=train_loader)
     # recorder
-
+    
 if __name__ == "__main__":
     main()

@@ -1,6 +1,5 @@
 from hook_manager import HookManager
-from forward_hook_context import ForwardHookContext
-from backward_hook_context import BackwardHookContext
+from custom_dataclasses import LayerRecord
 class Sequential:
     """生成したレイヤーをリストで受け取り、モデルをインスタンス化するためのクラス
         YAML
@@ -60,15 +59,8 @@ class Sequential:
         y = None
         for layer in self.layers:
             y = layer.forward(x)
-            ctx = ForwardHookContext(
-                layer=layer,
-                inputs=x.clone(),
-                outputs=y.clone()
-            )
-            
+            self.hook_manager.call_forward_hooks(layer.__class__.__name__, x.detach().clone().cpu(), y.detach().clone().cpu())
             x = y
-            
-            self.hook_manager.call_forward_hooks(layer, ctx)
         return x
     
     def backward(self, dout=1):

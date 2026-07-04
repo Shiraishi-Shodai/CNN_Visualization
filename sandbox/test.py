@@ -68,9 +68,10 @@ PLOT_NUM = 4
 # print(x)
 # print(y)
 
-sample_data = next(iter(train_loader))
-sample_imgs = sample_data[0]
-sample_labels = sample_data[1]
+"""画像の描画"""
+# sample_data = next(iter(train_loader))
+# sample_imgs = sample_data[0]
+# sample_labels = sample_data[1]
 # print(sample_labels)
 # print(sample_data)
 # print(math.ceil(4/3), type(math.ceil(4/3)))
@@ -79,20 +80,25 @@ sample_labels = sample_data[1]
 
 # print(len(sample_imgs))
 
-feature_imgs = []
-classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+# feature_imgs = []
+# classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
-@dataclass
-class SampleClass:
-    name : str
-    output : torch.Tensor
+# @dataclass
+# class SampleClass:
+#     name : str
+#     output : torch.Tensor
 
-for i in range(len(sample_labels)):
-    img, label = sample_imgs[i], sample_labels[i]
-    ctx = SampleClass(classes[label], img)
-    feature_imgs.append(ctx)
+# for i in range(len(sample_labels)):
+#     img, label = sample_imgs[i], sample_labels[i]
+#     ctx = SampleClass(classes[label], img)
+#     feature_imgs.append(ctx)
 
-for i in feature_imgs:
-    print(f"name : {i.name}, {i.output.shape}")
+# for i in feature_imgs:
+#     print(f"name : {i.name}, {i.output.shape}")
 
-plot_imgs(feature_imgs, PLOT_NUM, "public/img/plot_imgs.png")
+# plot_imgs(feature_imgs, PLOT_NUM, "public/img/plot_imgs.png")
+
+"""ptファイルの読み込み"""
+data = torch.load(r"C:/Users/siran/ML/cnn_visualization/public/pt/VGG16_train_epoch2_batch1.pt", weights_only=False)
+for i in data:
+    print(i.layer_name, i.input_shape, i.output_shape)

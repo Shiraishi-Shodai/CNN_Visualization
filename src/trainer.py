@@ -1,20 +1,25 @@
 from utils import accuracy
 import torch
 from tqdm import tqdm
+from custom_dataclasses import TrainerMetadata
 
 class Trainer:
 
-    def __init__(self, model, optimizer, criterion, device):
+    def __init__(self, model, optimizer, criterion, device, trainer_config, recorder):
         """ハイパーパラメータの初期化
         """
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
         self.device = device
+        self.trainer_config = trainer_config
+        self.recorder = recorder
         self.history = {
             "accuracy" : [],
             "loss" : []
         }
+        self.should_record = False
+        self.current_epoch = None
     
     # def fit(self, train_loader, max_epochs=100, verbose=100):
     #     """学習処理
@@ -45,14 +50,16 @@ class Trainer:
     #         if (epoch + 1) % verbose == 0:
     #             print(f"Epoch [{epoch + 1}/{max_epochs}] Accuracy : {avg_accuracy}% Loss : {avg_loss}")
     
-    def fit(self, train_loader, max_epochs=100):
+    def fit(self, train_loader):
         """Train実行用関数
         """
-        for epoch in range(max_epochs):
+        for epoch in range(self.trainer_config["max_epochs"]):
+            self.should_record = (epoch + 1) % self.trainer_config["verbose"] == 0
+            self.current_epoch = epoch + 1
             score, loss = self._run_epoch(
                 train_loader,
                 train=True,
-                desc=f"Train {epoch + 1}/{max_epochs}"
+                desc=f"Train {self.current_epoch}/{self.trainer_config["max_epochs"]}"
             )
             
             self.history["accuracy"].append(score)
@@ -61,7 +68,7 @@ class Trainer:
     def evaluate(self, validation_loader, mode="Test"):
         """Evaluate, Test実行用関数
         """
-        
+        self.should_record = True
         score, loss = self._run_epoch(
             validation_loader,
             train=False,
@@ -105,19 +112,29 @@ class Trainer:
         """
         epoch_loss = 0
         epoch_accuracy = 0
-        
+        metadata = None
+        mode = "train" if train else "eval"
         pbar = tqdm(dataloader, desc=desc)
-
-        for x, t in dataloader:
+        
+        for x, t in pbar:
             # CPU or CUDAをセット
             x = x.to(self.device)
             t = t.to(self.device)
+            
+            with self.recorder.record(TrainerMetadata("VGG16", mode, self.current_epoch, self.trainer_config["batch_size"]), self.should_record):
+                if self.should_record:
+                    self.model.hook_manager.register_all_forward_hooks([self.recorder.forward_hook])
+                # Train or Evaluate, Testの1エポック分の処理を実行
+                if train:
+                    pred, loss = self._train_step(x, t)
+                else:
+                    pred, loss = self._eval_step(x, t)
 
-            # Train or Evaluate, Testの1エポック分の処理を実行
-            if train:
-                pred, loss = self._train_step(x, t)
-            else:
-                pred, loss = self._eval_step(x, t)
+                self.should_record = False
+                
+                if self.should_record:
+                    self.model.hook_manager.unregister_all_forward_hooks()
+                
             
             score = accuracy(pred, t)
             epoch_loss += loss
