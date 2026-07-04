@@ -159,7 +159,6 @@ def tensor_to_display_image(tensor_img):
     ---------
     tensor_img : (C, H, W)
     """
-    print(tensor_img.shape)
     C = tensor_img.shape[0]
     display_img = tensor_img.permute(1, 2, 0).numpy()
     
@@ -182,7 +181,7 @@ def get_cmap(channel_nums):
     else:
         return "gray"
     
-def plot_imgs(data, num_cols, save_filename):
+def plot_imgs(data, num_cols, save_filename, axes_title=True, title=None):
     """取得した画像分描画する
     Parameter
     ---------
@@ -197,6 +196,8 @@ def plot_imgs(data, num_cols, save_filename):
     N = len(data) # 描画する画像の枚数
     rows = math.ceil(N / num_cols) # 余りも含めて表示できる行数
     fig, axes = plt.subplots(rows, num_cols)
+    if axes.ndim == 1:
+        axes = axes.reshape(1, -1)
 
     # プロット時は余りのデータまで
     for r in range(rows):
@@ -205,13 +206,16 @@ def plot_imgs(data, num_cols, save_filename):
             if idx >= N :
                 fig.delaxes(axes[r, c]) # 描画する画像の枚数よりも大きなidxを持つaxは一つずつ削除
                 continue
-            tensor_img = data[idx].output_tensor[0]
+            tensor_img = data[idx].output_tensor[-1]
 
             display_img = tensor_to_display_image(tensor_img) # 描画用画像を取得
             channel_nums = display_img.shape[0] # cmapを取得
             cmap = get_cmap(channel_nums)
             axes[r, c].imshow(display_img, cmap=cmap)
-            axes[r, c].set_title(data[idx].name)
             axes[r, c].axis("off")
-    fig.tight_layout() # 各axisが重ならないように設定
+            if axes_title:
+                axes[r, c].set_title(data[idx].name)
+    if axes_title:
+        fig.tight_layout() # 各axisが重ならないように設定
+    fig.suptitle(title)
     plt.savefig(save_filename)
