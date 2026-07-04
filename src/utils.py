@@ -153,6 +153,34 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
     
     return img[:, :, pad:H + pad, pad:W + pad]
 
+def tensor_to_display_image(tensor_img):
+    """tensor画像をplot描画用画像に変換する
+    Parameter
+    ---------
+    tensor_img : (C, H, W)
+    """
+    C = tensor_img.shape[0]
+    display_img = tensor_img.permute(1, 2, 0).detach().cpu().numpy()
+    
+    match C:
+        case 3:
+            pass
+        case 1:
+            display_img = display_img.squeeze(2)
+        case _:
+            display_img = display_img.mean(dim=2)
+        
+    return display_img
+
+def get_cmap(channel_nums):
+    """plt.imshowに使用するcmapを取得
+    """
+    
+    if channel_nums == 3:
+        return None
+    else:
+        return "gray"
+    
 def plot_imgs(data, num_cols, save_filename):
     """取得した画像分描画する
     Parameter
@@ -162,9 +190,11 @@ def plot_imgs(data, num_cols, save_filename):
     save_filename : 保存するファイル名
     """
     
+    display_img = None
+    cmap = None
+    channel_nums = 1
     N = len(data) # 描画する画像の枚数
     rows = math.ceil(N / num_cols) # 余りも含めて表示できる行数
-
     fig, axes = plt.subplots(rows, num_cols)
 
     # プロット時は余りのデータまで
@@ -174,7 +204,14 @@ def plot_imgs(data, num_cols, save_filename):
             if idx >= N :
                 fig.delaxes(axes[r, c]) # 描画する画像の枚数よりも大きなidxを持つaxは一つずつ削除
                 continue
-            axes[r, c].imshow(data[idx].output.permute(1, 2, 0).detach().numpy())
+            tensor_img = data[idx].output
+            if idx == 2:
+                tensor_img = tensor_img.mean(dim=0, keepdims=True)
+                print(tensor_img.shape)
+            display_img = tensor_to_display_image(tensor_img) # 描画用画像を取得
+            channel_nums = display_img.shape[0] # cmapを取得
+            cmap = get_cmap(channel_nums)
+            axes[r, c].imshow(display_img, cmap=cmap)
             axes[r, c].set_title(data[idx].name)
             axes[r, c].axis("off")
     fig.tight_layout() # 各axisが重ならないように設定
