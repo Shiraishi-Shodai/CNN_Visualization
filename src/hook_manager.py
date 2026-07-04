@@ -54,6 +54,8 @@ class HookManager:
     
     @contextmanager
     def register(self, hooks, enable=True):
+        """contextmanagerで準備と後かたずけセットで登録。enabledがFalseなら準備も後かたずけもしない
+        """
         if not enable:
             yield
             return

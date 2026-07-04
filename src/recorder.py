@@ -33,15 +33,21 @@ class Recorder:
         print(f"逆伝搬{layer, dout.shape}")
         
     def begin_forward(self, metadata):
+        """forward_hook前に実行する処理
+        """
         self.forward_feature_maps = []
         self.trainer_metadata = metadata
     
     def end_forward(self):
+        """forward_hook後に実行する処理
+        """
         torch.save(self.forward_feature_maps, rf"public/pt/{self.trainer_metadata.name}_{self.trainer_metadata.mode}_epoch{self.trainer_metadata.epoch}_batch{self.trainer_metadata.batch}.pt")
         self.forward_feature_maps = []
     
     @contextmanager
     def record(self, metadata, enabled=True):
+        """contextmanagerで準備と後かたずけセットで登録。enabledがFalseなら準備も後かたずけもしない
+        """
         if not enabled:
             yield
             return
