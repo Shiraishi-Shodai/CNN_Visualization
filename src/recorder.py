@@ -10,7 +10,7 @@ class Recorder:
     順伝搬, 逆伝搬用のデータを記録する
     """
     def __init__(self):
-        self.forward_feature_maps = {}
+        self.forward_feature_maps = []
         self.PLOT_NUM = 5 # 横方向にプロットする画像サイズ
     
     def forward_hook(self, layer, ctx):
@@ -19,7 +19,7 @@ class Recorder:
         class_name = layer.__class__.__name__
         
         if len(self.forward_feature_maps) == 0:
-            self.forward_feature_maps["Input"] = ctx.inputs
+            self.forward_feature_maps = ctx.inputs
         
         self.forward_feature_maps[class_name] = ctx.outputs.mean(dim=1)
         # print(f"順伝搬{layer.__class__.__name__, ctx.inputs.shape, ctx.outputs.shape}")

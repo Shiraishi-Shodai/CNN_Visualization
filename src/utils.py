@@ -185,7 +185,7 @@ def plot_imgs(data, num_cols, save_filename):
     """取得した画像分描画する
     Parameter
     ---------
-    imgs : list[dataclass] dataclass(name, output)
+    imgs : list[dataclass] dataclass(name, output), output(N, C, H, W)
     num_cols : 横方向に描画する画像の枚数
     save_filename : 保存するファイル名
     """
@@ -205,9 +205,7 @@ def plot_imgs(data, num_cols, save_filename):
                 fig.delaxes(axes[r, c]) # 描画する画像の枚数よりも大きなidxを持つaxは一つずつ削除
                 continue
             tensor_img = data[idx].output
-            if idx == 2:
-                tensor_img = tensor_img.mean(dim=0, keepdims=True)
-                print(tensor_img.shape)
+
             display_img = tensor_to_display_image(tensor_img) # 描画用画像を取得
             channel_nums = display_img.shape[0] # cmapを取得
             cmap = get_cmap(channel_nums)
