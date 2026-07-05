@@ -93,7 +93,6 @@ class Trainer:
         self.model.backward(dout)
         # パラメータの更新
         self.optimizer.update(self.model.params, self.model.grads)
-        
         return pred, loss
     
     def _eval_step(self, x, t):

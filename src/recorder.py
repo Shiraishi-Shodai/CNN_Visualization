@@ -1,11 +1,5 @@
-# trainer:
-#   recorder:
-#     enable: true
-#     save_forward: true
-#     save_backward: true
-#     max_samples: 10
 from utils import plot_imgs
-from custom_dataclasses import LayerRecord
+from custom_dataclasses import LayerRecord, GradientRecord
 import torch
 from contextlib import contextmanager
 from matplotlib import pyplot as plt
@@ -15,6 +9,7 @@ class Recorder:
     """
     def __init__(self):
         self.forward_feature_maps = []
+        self.gradient_record_list = []
         self.PLOT_NUM = 5 # 横方向にプロットする画像サイズ
         self.trainer_metatdata = None
     
@@ -35,8 +30,16 @@ class Recorder:
 
         self.forward_feature_maps.append(ctx)
 
-    def backward_hook(self, layer, dout):
-        print(f"逆伝搬{layer, dout.shape}")
+    def backward_hook(self, layer_name , grads):
+        
+        ctx = GradientRecord(
+            name=layer_name,
+            grad_norm=grads.norm(p=2).item(),
+            grad_std=grads.std().item(),
+            grad_mean=grads.mean().item(),
+            grad_max=grads.max().item(),
+            grad_min=grads.min().item()
+        )
         
     def begin_forward(self, metadata):
         """forward_hook前に実行する処理

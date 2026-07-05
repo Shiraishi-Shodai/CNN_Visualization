@@ -111,9 +111,9 @@ import os
 # # print(type(r.item()), r.item())
 # print(r)
 
-dir_path = r"public/pt/miniVGG"
-file_list = glob.glob(f"{dir_path}/*.pt")
-print(file_list)
+# dir_path = r"public/pt/miniVGG"
+# file_list = glob.glob(f"{dir_path}/*.pt")
+# print(file_list)
 
 # from  matplotlib import pyplot as plt
 # sample = next(iter(train_loader))
@@ -126,3 +126,21 @@ print(file_list)
 #     plt.title(classes[sample_t[i]])
 #     plt.show()
     
+# a = torch.tensor([1, 2, 3])
+# print(a.sum().item())
+
+# sum_params = 0
+# sum_grads = 0
+
+# for layer in self.model.layers:
+#     for param, grad in zip(layer.params, layer.grads):
+#         sum_params += param.sum().item()
+#         sum_grads += grad.sum().item()
+# print(self.current_epoch, sum_params, sum_grads)
+
+a = torch.arange(10) + 0.1
+a = a.reshape(2, -1)
+# r = calc_l2_norm(a)
+# print(r)
+
+print(a.norm(p=2).item())

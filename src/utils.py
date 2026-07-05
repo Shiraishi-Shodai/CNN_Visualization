@@ -219,3 +219,12 @@ def plot_imgs(data, num_cols, save_filename, axes_title=True, title=None):
         fig.tight_layout() # 各axisが重ならないように設定
     fig.suptitle(title)
     plt.savefig(save_filename)
+    
+# def calc_l2_norm(grads: torch.tensor):
+#     l2_norm = 0
+    
+#     if grads.dim != 1:
+#         grads = grads.flatten()
+#     l2_norm = torch.sqrt(sum([grad.item() ** 2 for grad in grads]))
+    
+#     return l2_norm
