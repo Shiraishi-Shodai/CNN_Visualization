@@ -138,9 +138,17 @@ import os
 #         sum_grads += grad.sum().item()
 # print(self.current_epoch, sum_params, sum_grads)
 
-a = torch.arange(10) + 0.1
-a = a.reshape(2, -1)
-# r = calc_l2_norm(a)
-# print(r)
+# a = torch.arange(10) + 0.1
+# a = a.reshape(2, -1)
+# # r = calc_l2_norm(a)
+# # print(r)
 
-print(a.norm(p=2).item())
+# print(a.norm(p=2).item())
+
+a = {
+    "a": 10,
+    "b": 20,
+    "c": 30
+}
+
+print(a.keys(), a.keys())

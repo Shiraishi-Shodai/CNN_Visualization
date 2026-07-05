@@ -3,26 +3,38 @@ import torch
 from copy import deepcopy
 import glob
 from pathlib import Path
+from matplotlib import pyplot as plt
+import math
 class Visualizer:
-    def __init__(self, pt_dir_path, save_dir_path, view_mode, num_cols):
+    def __init__(self, history=None, pt_dir_path=None, save_dir_path=None, view_mode="", num_cols=5, save_filename=""):
         self.pt_dir_path = pt_dir_path
         self.save_dir_path = save_dir_path
         self.view_mode = view_mode
         self.num_cols = num_cols
+        self.history = history
+        self.save_filename = save_filename
         self.view_function = None
     
     def view(self):
-        file_list = list(Path(self.pt_dir_path).glob("*.pt"))
         match self.view_mode:
             case "overview":
                 self.view_function = self._overviewViewer
             case "featureview":
                 self.view_function = self._featureMapViewer
+            case "plot_fit_history":
+                self.view_function = self._plot_fit_history
+            case _:
+                raise ValueError(f"{self.view_mode}は存在しません")
         
-        for file in file_list:
-            layer_records = torch.load(file, weights_only=False)
-            save_filename = Path(self.save_dir_path, file.name.replace(".pt", ".png"))
-            self.view_function(layer_records, save_filename)
+        if self.view_mode in ["overview", "featureview"]:
+            file_list = list(Path(self.pt_dir_path).glob("*.pt"))
+            for file in file_list:
+                layer_records = torch.load(file, weights_only=False)
+                save_filename = Path(self.save_dir_path, file.name.replace(".pt", ".png"))
+                self.view_function(layer_records, save_filename)
+        
+        if self.view_mode == "plot_fit_history":
+            self.view_function()
         
     def _overviewViewer(self, layer_records: list, save_filename : str) -> None:
         """"各レイヤーの出力画像を描画。1枚の画像を保存。4チャンネル以上の画像はチャンネル方向に平均化した後プロット
@@ -70,9 +82,26 @@ class Visualizer:
             save_filename = Path(self.save_dir_path, middle_path, file_name)
             plot_imgs(dummy_layer_records, self.num_cols, save_filename, axes_title=False, title=f"layer_{i}_{dummy_layer_record.name}")
     
-
-pt_dir_path = Path(r"public/pt/miniVGG")
-save_dir_path = Path(r"public/img/miniVGG")
-v = Visualizer(pt_dir_path, save_dir_path, "overview", 5)
-v.view()
+    def _plot_fit_history(self):
+        if len(self.history.keys()) == 0:
+            raise ValueError(f"history key is not found")
+        
+        rows = math.ceil(len(self.history.keys()) / 2)
+        fig, axes = plt.subplots(rows, 2)
+        key_list = list(self.history.keys())
+        
+        for r in range(rows):
+            for c in range(2):
+                
+                key = key_list[r * 2 + c]
+                value = self.history[key]
+                axes[r, c].plot(range(len(value)), value)
+                axes[r, c].set_title(key)
+        
+        fig.tight_layout() # 各axisが重ならないように設定
+        plt.savefig(self.save_filename)
+# pt_dir_path = Path(r"public/pt/miniVGG")
+# save_dir_path = Path(r"public/img/miniVGG")
+# v = Visualizer(pt_dir_path, save_dir_path, "overview", 5)
+# v.view()
 # v.featureMapViewer(layer_records, 5, r"public/img/featuremap_vgg16/sample.png")

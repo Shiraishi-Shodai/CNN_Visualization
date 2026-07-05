@@ -221,6 +221,12 @@ class Flatten:
 
 class Dropout:
     def __init__(self, dropout_rate):
+        """
+        Parameter
+        --------
+        dropout_rate : ニューロンの接続を切る(dropoutする割合)
+        """
+        
         self.params = []
         self.grads = []
         self.dropout_rate = dropout_rate
@@ -229,8 +235,7 @@ class Dropout:
     def forward(self, x, mode="train"):
         
         if mode == "train":
-            self.mask = self.dropout_rate > torch.rand_like(x)
-
+            self.mask = torch.rand_like(x) > self.dropout_rate
             return x * self.mask
         else:
             return x * (1.0 - self.dropout_rate)

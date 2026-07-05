@@ -1,5 +1,5 @@
 import torch
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class LayerRecord:
@@ -33,8 +33,8 @@ class TrainerMetadata:
     
 @dataclass
 class Record:
-    metadata: TrainerMetadata
+    metadata: TrainerMetadata | None = None
 
-    layer_records: list[LayerRecord]
-    param_records: list[ParamRecord]
-    gradient_records: list[GradientRecord]
+    layer_records: list[LayerRecord] = field(default_factory=list)
+    param_records: list[ParamRecord] = field(default_factory=list)
+    gradient_records: list[GradientRecord] = field(default_factory=list)

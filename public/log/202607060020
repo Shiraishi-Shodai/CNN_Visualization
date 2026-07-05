@@ -1,0 +1,58 @@
+===== layer ====== Convolution
+params : max 0.012560416013002396, mean 0.002893233671784401 shape torch.Size([64, 3, 3, 3])
+grads:  max 3.989371634816052e-06, mean 4.887922955276736e-07 shape torch.Size([64, 3, 3, 3])
+params : max 5.9162580328120384e-06, mean 1.196723360408214e-06 shape torch.Size([64])
+grads:  max 5.748900548496749e-06, mean 9.846115744949202e-07 shape torch.Size([64])
+===== layer ====== ReLU
+===== layer ====== Convolution
+params : max 0.025359097868204117, mean 0.004442186094820499 shape torch.Size([64, 64, 3, 3])
+grads:  max 8.183519071280898e-07, mean 3.7187994905707455e-08 shape torch.Size([64, 64, 3, 3])
+params : max 5.0449627451598644e-05, mean 1.3519112144422252e-05 shape torch.Size([64])
+grads:  max 3.778235623030923e-05, mean 9.755680366652086e-06 shape torch.Size([64])
+===== layer ====== ReLU
+===== layer ====== MaxPooling
+===== layer ====== Convolution
+params : max 0.05114462226629257, mean 0.008848290890455246 shape torch.Size([128, 64, 3, 3])
+grads:  max 3.0743967727175914e-07, mean 1.4575208595601907e-08 shape torch.Size([128, 64, 3, 3])
+params : max 0.00022064585937187076, mean 4.655191514757462e-05 shape torch.Size([128])
+grads:  max 0.0002007874136324972, mean 4.0242401155410334e-05 shape torch.Size([128])
+===== layer ====== ReLU
+===== layer ====== Convolution
+params : max 0.03543819859623909, mean 0.006230490282177925 shape torch.Size([128, 128, 3, 3])
+grads:  max 5.206826472203829e-07, mean 1.3447711388892003e-08 shape torch.Size([128, 128, 3, 3])
+params : max 0.001376541331410408, mean 0.00024605815997347236 shape torch.Size([128])
+grads:  max 0.0008606868796050549, mean 0.00014890408783685416 shape torch.Size([128])
+===== layer ====== ReLU
+===== layer ====== MaxPooling
+===== layer ====== Convolution
+params : max 0.07201272249221802, mean 0.012480202130973339 shape torch.Size([256, 128, 3, 3])
+grads:  max 3.271484729339136e-06, mean 3.9248302385885836e-08 shape torch.Size([256, 128, 3, 3])
+params : max 0.004539884626865387, mean 0.000386216415790841 shape torch.Size([256])
+grads:  max 0.0022827358916401863, mean 0.00024756480706855655 shape torch.Size([256])
+===== layer ====== ReLU
+===== layer ====== Convolution
+params : max 0.053366951644420624, mean 0.00880536250770092 shape torch.Size([256, 256, 3, 3])
+grads:  max 3.6294670280767605e-05, mean 2.0450488591450267e-07 shape torch.Size([256, 256, 3, 3])
+params : max 0.010597601532936096, mean 0.0014831165317445993 shape torch.Size([256])
+grads:  max 0.008508729748427868, mean 0.000845031812787056 shape torch.Size([256])
+===== layer ====== ReLU
+===== layer ====== Convolution
+params : max 0.0508597269654274, mean 0.008814956992864609 shape torch.Size([256, 256, 3, 3])
+grads:  max 0.00022645332501269877, mean 2.4162930003512884e-06 shape torch.Size([256, 256, 3, 3])
+params : max 0.031347453594207764, mean 0.004180688410997391 shape torch.Size([256])
+grads:  max 0.023205911740660667, mean 0.0025923566427081823 shape torch.Size([256])
+===== layer ====== ReLU
+===== layer ====== MaxPooling
+===== layer ====== Flatten
+===== layer ====== Affine
+params : max 0.10752759128808975, mean 0.01761217974126339 shape torch.Size([4096, 256])
+grads:  max 0.0009808632312342525, mean 9.8354576039128e-06 shape torch.Size([4096, 256])
+params : max 0.03128907084465027, mean 0.004131491761654615 shape torch.Size([256])
+grads:  max 0.031788185238838196, mean 0.0035147187300026417 shape torch.Size([256])
+===== layer ====== ReLU
+===== layer ====== Dropout
+===== layer ====== Affine
+params : max 0.35769128799438477, mean 0.06994720548391342 shape torch.Size([256, 10])
+grads:  max 0.003754809033125639, mean 0.00019758327107410878 shape torch.Size([256, 10])
+params : max 0.13675770163536072, mean 0.06165245920419693 shape torch.Size([10])
+grads:  max 0.10499389469623566, mean 0.03758719190955162 shape torch.Size([10])

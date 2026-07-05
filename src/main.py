@@ -11,6 +11,8 @@ from model_builder import ModelBuilder
 from torch.utils.data import Subset
 from recorder import Recorder
 from hook_manager import HookManager
+from optimizer_builder import OptimizerBuilder
+from visualizer import Visualizer
 
 torch.manual_seed(42)
 
@@ -23,6 +25,7 @@ def main():
     # ハイパーパラメータの読み込み
     model_config = load_yaml("config/miniVGG.yaml")
     trainer_config = load_yaml("config/train.yaml")["train"]
+    optimizer_config = load_yaml("config/optimizer.yaml")
 
     # transformの定義
     transform = transforms.Compose([
@@ -50,20 +53,25 @@ def main():
     
     print(f"使用する学習データ数 {len(train_loader.dataset)}") # データ数
 
-    # Trainerの定義
-    optimizer = SGD(trainer_config["lr"])
+    # 損失関数の定義
     criterion = SoftmaxWithLoss()
     recorder = Recorder()
     hook_manager = HookManager()
+    # モデルのビルド
     mb = ModelBuilder(model_config)
     layers = mb.build()
     model = Sequential(model_config["model"]["name"], layers, hook_manager)
     model.to(device)
+    # optimizerのビルド
+    ob = OptimizerBuilder(optimizer_config)
+    optimizer = ob.build(model.params)
+    # trainerのビルド
     trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes)
-    
     # 学習
     trainer.fit(train_loader=train_loader)
-    recorder
+    
+    visualizer = Visualizer(history=trainer.history, view_mode="plot_fit_history", save_filename=r"public/img/history.png")
+    visualizer.view()
     
 if __name__ == "__main__":
     main()

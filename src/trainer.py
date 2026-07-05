@@ -17,7 +17,9 @@ class Trainer:
         self.classes = classes
         self.history = {
             "accuracy" : [],
-            "loss" : []
+            "loss" : [],
+            "l2_params": [],
+            "l2_grads": []
         }
         self.should_record = False
         self.current_epoch = None
@@ -57,7 +59,7 @@ class Trainer:
         for epoch in range(self.trainer_config["max_epochs"]):
             self.should_record = (epoch + 1) % self.trainer_config["verbose"] == 0
             self.current_epoch = epoch + 1
-            score, loss = self._run_epoch(
+            score, loss, l2_params, l2_grads = self._run_epoch(
                 train_loader,
                 train=True,
                 desc=f"Train {self.current_epoch}/{self.trainer_config["max_epochs"]}"
@@ -65,12 +67,20 @@ class Trainer:
             
             self.history["accuracy"].append(score)
             self.history["loss"].append(loss)
+            self.history["l2_params"].append(l2_params)
+            self.history["l2_grads"].append(l2_grads)
+            
+        for i, layer in enumerate(self.model.layers):
+            print(f"===== layer ====== {layer.__class__.__name__}")
+            for param, grad in zip(layer.params, layer.grads):
+                print(f"params : max {torch.max(torch.abs(param))}, mean {torch.mean(torch.abs(param))} shape {param.shape}")
+                print(f"grads:  max {torch.max(torch.abs(grad))}, mean {torch.mean(torch.abs(grad))} shape {grad.shape}")
     
     def evaluate(self, validation_loader, mode="Test"):
         """Evaluate, Test実行用関数
         """
         self.should_record = True
-        score, loss = self._run_epoch(
+        score, loss, l2_params, l2_grads = self._run_epoch(
             validation_loader,
             train=False,
             desc=f"{mode} mode"
@@ -117,6 +127,8 @@ class Trainer:
         """
         epoch_loss = 0
         epoch_accuracy = 0
+        epoch_l2_params = 0
+        epoch_l2_grads = 0
         mode = "train" if train else "eval"
         pbar = tqdm(dataloader, desc=desc)
         is_target = False
@@ -151,4 +163,7 @@ class Trainer:
                 "accuracy" : score
             })
         
-        return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader)
+        
+        epoch_l2_params = sum([param.detach().clone().cpu().norm(p=2).item() for param in self.model.params])
+        epoch_l2_grads = sum([grads.detach().clone().cpu().norm(p=2).item() for grads in self.model.grads])
+        return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader), epoch_l2_params, epoch_l2_grads

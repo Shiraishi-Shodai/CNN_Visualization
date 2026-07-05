@@ -219,7 +219,7 @@ def plot_imgs(data, num_cols, save_filename, axes_title=True, title=None):
         fig.tight_layout() # 各axisが重ならないように設定
     fig.suptitle(title)
     plt.savefig(save_filename)
-    
+
 # def calc_l2_norm(grads: torch.tensor):
 #     l2_norm = 0
     

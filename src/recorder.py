@@ -1,5 +1,5 @@
 from utils import plot_imgs
-from custom_dataclasses import LayerRecord, GradientRecord
+from custom_dataclasses import LayerRecord, GradientRecord, Record
 import torch
 from contextlib import contextmanager
 from matplotlib import pyplot as plt
@@ -10,8 +10,8 @@ class Recorder:
     def __init__(self):
         self.forward_feature_maps = []
         self.gradient_record_list = []
-        self.PLOT_NUM = 5 # 横方向にプロットする画像サイズ
         self.trainer_metatdata = None
+        # self.record = Record()
     
     def forward_hook(self, layer_name , input_tensor, output_tensor):
         """input画像は3チャンネル。その他の画像はチャンネル方向に平均した画像を格納
