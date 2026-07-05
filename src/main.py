@@ -21,13 +21,13 @@ def main():
     print(f"使用するデバイス {device}")    
 
     # ハイパーパラメータの読み込み
-    model_config = load_yaml("config/VGG16.yaml")
+    model_config = load_yaml("config/miniVGG.yaml")
     trainer_config = load_yaml("config/train.yaml")["train"]
 
     # transformの定義
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Resize((224, 224)),
+        transforms.Resize((32, 32)),
     ])
     
     # データの読み込み
@@ -45,14 +45,11 @@ def main():
     train_loader = torch.utils.data.DataLoader(
         train_subset,
         batch_size=trainer_config["batch_size"],
-        shuffle=True
+        shuffle=False
         )
     
     print(f"使用する学習データ数 {len(train_loader.dataset)}") # データ数
 
-    # sample = next(iter(train_loader))
-    # sample_x, sample_t = sample[0], sample[1]
-    
     # Trainerの定義
     optimizer = SGD(trainer_config["lr"])
     criterion = SoftmaxWithLoss()
@@ -60,13 +57,13 @@ def main():
     hook_manager = HookManager()
     mb = ModelBuilder(model_config)
     layers = mb.build()
-    model = Sequential(layers, hook_manager)
+    model = Sequential(model_config["model"]["name"], layers, hook_manager)
     model.to(device)
-    trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder)
+    trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes)
     
     # 学習
     trainer.fit(train_loader=train_loader)
-    # recorder
+    recorder
     
 if __name__ == "__main__":
     main()

@@ -25,22 +25,24 @@ from torchvision import datasets, transforms
 import math
 from utils import plot_imgs
 from dataclasses import dataclass
+import glob
+import os
 
-train_data = datasets.CIFAR10(
-    root="data/cifar10", 
-    train=True, 
-    download=True, 
-    transform=transforms.ToTensor(),
-)
+# train_data = datasets.CIFAR10(
+#     root="data/cifar10", 
+#     train=True, 
+#     download=True, 
+#     transform=transforms.ToTensor(),
+# )
 
-# data loaderの作成
-train_loader = torch.utils.data.DataLoader(
-    train_data,
-    batch_size=17,
-    shuffle=True
-    )
+# # data loaderの作成
+# train_loader = torch.utils.data.DataLoader(
+#     train_data,
+#     batch_size=17,
+#     shuffle=True
+#     )
 
-PLOT_NUM = 4
+# PLOT_NUM = 4
 
 # x = torch.randint(1, 10, (10,)).reshape(2, -1)
 # print(x)
@@ -98,7 +100,29 @@ PLOT_NUM = 4
 
 # plot_imgs(feature_imgs, PLOT_NUM, "public/img/plot_imgs.png")
 
-"""ptファイルの読み込み"""
-data = torch.load(r"C:/Users/siran/ML/cnn_visualization/public/pt/VGG16_train_epoch2_batch1.pt", weights_only=False)
-for i in data:
-    print(i.layer_name, i.input_shape, i.output_shape)
+# """ptファイルの読み込み"""
+# data = torch.load(r"C:/Users/siran/ML/cnn_visualization/public/pt/VGG16_train_epoch2_batch1.pt", weights_only=False)
+# for i in data:
+#     print(i.layer_name, i.input_shape, i.output_shape)
+
+# a = torch.tensor([2, 0, 2])
+# cond = a == 2
+# r = cond.nonzero(as_tuple=True)[0][0].item() if len(cond.nonzero(as_tuple=True)[0]) > 0 else None
+# # print(type(r.item()), r.item())
+# print(r)
+
+dir_path = r"public/pt/miniVGG"
+file_list = glob.glob(f"{dir_path}/*.pt")
+print(file_list)
+
+# from  matplotlib import pyplot as plt
+# sample = next(iter(train_loader))
+# sample_x, sample_t = sample[0], sample[1]
+# for i in range(len(sample_t)):
+#     if sample_t[i] != 2:
+#         continue
+#     plt.imshow(sample_x[i].permute(1, 2, 0).detach().cpu())
+#     print(i)
+#     plt.title(classes[sample_t[i]])
+#     plt.show()
+    

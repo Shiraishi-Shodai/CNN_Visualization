@@ -39,6 +39,7 @@ class HookManager:
         
         """
         for hook in self.forward_hooks:
+            # print(f"hook shape : {input_tensor.shape, output_tensor.shape}") 
             hook(layer_name, input_tensor, output_tensor)
     
     def call_backward_hook(self, layer, output):

@@ -15,3 +15,4 @@ class TrainerMetadata:
     mode : str
     epoch : int
     batch : int
+    plot_img_idx : int

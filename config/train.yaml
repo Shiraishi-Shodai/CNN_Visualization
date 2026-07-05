@@ -1,8 +1,18 @@
+# train:
+#   name : VGG16Cifar10
+#   batch_size : 1
+#   max_epochs : 5
+#   lr : 0.001
+#   subset : 1
+#   sample : True
+#   verbose : 2
+
 train:
-  name : VGG16Cifar10
-  batch_size : 1
-  max_epochs : 5
+  name : Cifar10
+  batch_size : 64
+  max_epochs : 10
   lr : 0.001
-  subset : 1
+  subset : 1000
   sample : True
   verbose : 2
+  plot_img_idx : 2 # 画像を確認するラベル

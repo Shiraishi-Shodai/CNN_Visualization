@@ -1,0 +1,185 @@
+model:
+  name: miniVGG
+  input_size: 150528        # (3,224,224)
+  output_size: 10
+  save_sample_size: 1
+
+  layers:
+
+    # ==========================
+    # Block1
+    # ==========================
+
+    - type: Convolution
+      # (3,32,32) -> (64,32,32)
+      out_features: 65536
+      in_channels: 3
+      out_channels: 64
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (64,32,32) -> (64,32,32)
+
+    - type: Convolution
+      # (64,32,32) -> (64,32,32)
+      out_features: 65536
+      in_channels: 64
+      out_channels: 64
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (64,32,32) -> (64,32,32)
+
+    - type: MaxPooling
+      # (64,32,32) -> (64,16,16)
+      out_features: 16384
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Block2
+    # ==========================
+
+    - type: Convolution
+      # (64,16,16) -> (128,16,16)
+      out_features: 32768
+      in_channels: 64
+      out_channels: 128
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (128,16,16) -> (128,16,16)
+
+    - type: Convolution
+      # (128,16,16) -> (128,16,16)
+      out_features: 32768
+      in_channels: 128
+      out_channels: 128
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (128,16,16) -> (128,16,16)
+
+    - type: MaxPooling
+      # (128,16,16) -> (128,8,8)
+      out_features: 8192
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Block3
+    # ==========================
+
+    - type: Convolution
+      # (128,8,8) -> (256,8,8)
+      out_features: 16384
+      in_channels: 128
+      out_channels: 256
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (256,8,8) -> (256,8,8)
+
+    - type: Convolution
+      # (256,8,8) -> (256,8,8)
+      out_features: 16384
+      in_channels: 256
+      out_channels: 256
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (256,8,8) -> (256,8,8)
+
+    - type: Convolution
+      # (256,8,8) -> (256,8,8)
+      out_features: 16384
+      in_channels: 256
+      out_channels: 256
+      kernel_h: 3
+      kernel_w: 3
+      stride: 1
+      padding: 1
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (256,8,8) -> (256,8,8)
+
+    - type: MaxPooling
+      # (256,8,8) -> (256,4,4)
+      out_features: 4096
+      pool_h: 2
+      pool_w: 2
+      stride: 2
+      padding: 0
+
+    # ==========================
+    # Fully Connected
+    # ==========================
+
+    - type: Flatten
+      # (256,4,4) -> (4096)
+      out_features: 4096
+
+    - type: Affine
+      # (4096) -> (4096)
+      out_features: 256
+      initializer : 
+        weight : "he"
+        bias : "zeros"
+
+    - type: ReLU
+      # (256) -> (256)
+
+    - type: Dropout
+    # (256) -> (256)
+      out_features: 256
+      dropout_rate : 0.5
+
+    - type: Affine
+      # (256) -> (10)
+      out_features: 10
+      initializer : 
+        weight : "he"
+        bias : "zeros"

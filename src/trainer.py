@@ -5,7 +5,7 @@ from custom_dataclasses import TrainerMetadata
 
 class Trainer:
 
-    def __init__(self, model, optimizer, criterion, device, trainer_config, recorder):
+    def __init__(self, model, optimizer, criterion, device, trainer_config, recorder, classes):
         """ハイパーパラメータの初期化
         """
         self.model = model
@@ -14,6 +14,7 @@ class Trainer:
         self.device = device
         self.trainer_config = trainer_config
         self.recorder = recorder
+        self.classes = classes
         self.history = {
             "accuracy" : [],
             "loss" : []
@@ -106,30 +107,41 @@ class Trainer:
         loss = self.criterion.forward(y, t)
         
         return pred, loss
+    
+    def _step(self, train, x, t):
+        if train:
+            return self._train_step(x, t)
+        return self._eval_step(x, t)
 
     def _run_epoch(self, dataloader, train=True, desc=""):
         """1エポック分の処理内容を実装
         """
         epoch_loss = 0
         epoch_accuracy = 0
-        metadata = None
         mode = "train" if train else "eval"
         pbar = tqdm(dataloader, desc=desc)
+        is_target = False
+        cond = 1 == 0 
         
         for x, t in pbar:
             # CPU or CUDAをセット
             x = x.to(self.device)
             t = t.to(self.device)
             
-            with self.recorder.record(TrainerMetadata("VGG16", mode, self.current_epoch, self.trainer_config["batch_size"]), self.should_record):
-                with self.model.hook_manager.register([self.recorder.forward_hook], self.should_record):
+            # 画像描画するラベルを取得
+            cond = self.trainer_config["plot_img_idx"] == t
+            plot_img_idx = cond.nonzero(as_tuple=True)[0][0].item() if len(cond.nonzero(as_tuple=True)[0]) > 0 else None
+            # 画像描画するラベルが含まれていれば、1epochに1度だけ記録する
+            # plot_img_idxにラベルが入っているとき、バッチ内に記録対象のバッチがあることを意味する
+            if plot_img_idx:
+                with self.recorder.record(TrainerMetadata(self.model.name, mode, self.current_epoch, self.trainer_config["batch_size"], plot_img_idx), self.should_record):
+                    with self.model.hook_manager.register([self.recorder.forward_hook], self.should_record):
+                        # Train or Evaluate, Testの1エポック分の処理を実行
+                        pred, loss = self._step(train, x, t)
+                        self.should_record = False
+            else:
                 # Train or Evaluate, Testの1エポック分の処理を実行
-                    if train:
-                        pred, loss = self._train_step(x, t)
-                    else:
-                        pred, loss = self._eval_step(x, t)
-
-                    self.should_record = False
+                pred, loss = self._step(train, x, t)
                 
             score = accuracy(pred, t)
             epoch_loss += loss

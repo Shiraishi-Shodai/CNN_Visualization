@@ -8,6 +8,7 @@ from utils import plot_imgs
 from custom_dataclasses import LayerRecord
 import torch
 from contextlib import contextmanager
+from matplotlib import pyplot as plt
 class Recorder:
     """
     順伝搬, 逆伝搬用のデータを記録する
@@ -20,6 +21,10 @@ class Recorder:
     def forward_hook(self, layer_name , input_tensor, output_tensor):
         """input画像は3チャンネル。その他の画像はチャンネル方向に平均した画像を格納
         """
+        # print(f"recorder shape : {input_tensor.shape, output_tensor.shape}")
+        input_tensor = input_tensor[self.trainer_metadata.plot_img_idx:self.trainer_metadata.plot_img_idx+1]
+        output_tensor = output_tensor[self.trainer_metadata.plot_img_idx:self.trainer_metadata.plot_img_idx+1]
+        
         ctx = LayerRecord(
             name=layer_name,
             input_tensor=input_tensor,
@@ -27,6 +32,7 @@ class Recorder:
             input_shape=input_tensor.shape,
             output_shape=output_tensor.shape
         )
+
         self.forward_feature_maps.append(ctx)
 
     def backward_hook(self, layer, dout):
@@ -41,7 +47,7 @@ class Recorder:
     def end_forward(self):
         """forward_hook後に実行する処理
         """
-        torch.save(self.forward_feature_maps, rf"public/pt/{self.trainer_metadata.name}_{self.trainer_metadata.mode}_epoch{self.trainer_metadata.epoch}_batch{self.trainer_metadata.batch}.pt")
+        torch.save(self.forward_feature_maps, rf"public/pt/{self.trainer_metadata.name}/{self.trainer_metadata.mode}_epoch{self.trainer_metadata.epoch}_batch{self.trainer_metadata.batch}.pt")
         self.forward_feature_maps = []
     
     @contextmanager

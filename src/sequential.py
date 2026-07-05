@@ -23,7 +23,8 @@ class Sequential:
     ├── model.backward(dout)
     └── optimizer.update(...)
     """
-    def __init__(self, layers : list, hook_manager : HookManager):
+    def __init__(self, name : str, layers : list, hook_manager : HookManager):
+        self.name = name
         self.layers = layers
         self.device = None
         self.hook_manager = hook_manager
@@ -59,6 +60,7 @@ class Sequential:
         y = None
         for layer in self.layers:
             y = layer.forward(x)
+            # print(f"sequential : {x.shape, y.shape}")
             self.hook_manager.call_forward_hooks(layer.__class__.__name__, x.detach().clone().cpu(), y.detach().clone().cpu())
             x = y
         return x
