@@ -145,10 +145,46 @@ import os
 
 # print(a.norm(p=2).item())
 
-a = {
-    "a": 10,
-    "b": 20,
-    "c": 30
-}
+# a = list(range(10))
+# print(a)
+# print(a[1:7:2])
 
-print(a.keys(), a.keys())
+n = 1
+c = 1
+hh = 5
+ww = 5
+
+pixels = n * c * hh * ww
+pad = 1
+img = torch.range(1, pixels).reshape(1, 1, 5, 5)
+N, C, H, W = img.shape
+filter_h = 3
+filter_w = 3
+stride = 1
+out_h = int((H + pad * 2 - filter_h) / stride) + 1
+out_w = int((W + pad * 2 - filter_w) / stride) + 1
+pad_img = torch.zeros(N, C, pad*2 + H, pad*2+W)
+
+pad_img[:, :, pad:-pad, pad:-pad] = img
+
+col = torch.zeros((N, C, filter_h, filter_w, out_h, out_w))
+
+# print(pad_img, out_h, out_w)
+
+for y in range(filter_h):
+    y_max = y + stride * out_h
+    for x in range(filter_w):
+        x_max = x + stride * out_w
+        # 画像を一度の処理で複数の領域から1ピクセルずつ切り出すイメージ
+        # 各畳み込み位置に対応する需要やを1度にまとめて抜き出している
+        col[:, :, y, x, :, :] = pad_img[:, :, y:y_max:stride, x:x_max:stride]
+        print(y, x)
+print(col.shape)
+print(pad_img)
+print(col)
+
+col = col.permute(0, 4, 5, 1, 2, 3).reshape(N * out_h * out_w, -1)
+print(col)
+# b = torch.arange(25).reshape(5, -1)
+# print(b)
+# print(b[0:5:2, 0:5:2])

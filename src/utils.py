@@ -94,6 +94,7 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
     """
     
     N, C, H, W = input_data.shape
+    # outのサイズ分カーネルは平行移動し、畳み込みを行う
     out_h = (H + pad * 2 - filter_h) // stride + 1
     out_w = (W + pad * 2 - filter_w) // stride + 1
     
@@ -115,9 +116,14 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
         y_max = y + stride * out_h
         for x in range(filter_w):
             x_max = x + stride * out_w
+            # カーネルの各ピクセルが掛け算する入力ピクセルを、カーネルのピクセルごとに切り出している
+            # 例) カーネルの左上を掛け算する入力ピクセルを一度に抜き出す
+            # 受容野 : カーネルを適用する領域
             col[:, :, y, x, :, :] = img[:, :, y:y_max:stride, x:x_max:stride]
     
     #  (batch_size, FH, FW, C, out_h, out_w) → (batch_size * out_h * out_w, C * FH * FW)
+    # 各行が1つの受容野になるように並べる
+    # 各列に受容野内でカーネルの各係数にかける入力画素を並べる
     col = col.permute(0, 4, 5, 1, 2, 3).reshape(N * out_h * out_w, -1)
     
     return col
@@ -141,9 +147,11 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
     N, C, H, W = input_shape
     out_h = (H + pad * 2 - filter_h) // stride + 1
     out_w = (H + pad * 2 - filter_w) // stride + 1
+    # (勾配受容野, カーネルの各係数) → (N, C, カーネルh, カーネルw, 勾配受容野h, 勾配受容野w)
     col = col.reshape(N, out_h, out_w, C, filter_h, filter_w).permute(0, 3, 4, 5, 1, 2)
 
-    img = torch.zeros((N, C, H + 2 * pad + stride - 1, W + 2 * pad + stride - 1), device=col.device, dtype=col.dtype)
+    # img = torch.zeros((N, C, H + 2 * pad + stride - 1, W + 2 * pad + stride - 1), device=col.device, dtype=col.dtype)
+    img = torch.zeros((N, C, H + 2 * pad, W + 2 * pad), device=col.device, dtype=col.dtype)
 
     for y in range(filter_h):
         y_max = y + stride * out_h

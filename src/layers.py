@@ -131,6 +131,7 @@ class Convolution:
 
         col = im2col(x, FH, FW, self.stride, self.pad)             # (batch_size * out_h * out_w, C * FH * FW)
         col_W = weight.reshape(FN, -1).T                           #(FN, C * FH * FW) → (C * FH * FW, FN)
+        # (受容野, カーネルの各係数にかける入力ピクセル) @ (カーネルの各係数, 出力チャンネル) = (受容野, 出力チャンネル)
         out = col @ col_W + bias                                 # (batch_size * out_h * out_w, C * FH * FW) @ (C * FH * FW, FN) = (batch_size * out_h * out_w, FN)
         out = out.reshape(N, out_h, out_w, -1).permute(0, 3, 1, 2) # (batch_size * out_h * out_w, FN) → (batch_size, FN, out_h, out_w)
         
@@ -143,12 +144,16 @@ class Convolution:
     def backward(self, dout):
         weight, bias = self.params
         FN, C, FH, FW = weight.shape
+        # dout (N, out_channel, out_h, out_w)
+        # (N, out_channel, out_h, out_w) → (N, out_h, out_w, out_channel) → (N * out_h * out_w, out_channel) 
+        # (勾配受容野, 出力チャンネル)
         dout = dout.permute(0, 2, 3, 1).reshape(-1, FN)
-        
+        # 各受容野の勾配の合計を出力チャンネルごとに計算
         db = torch.sum(dout, dim=0)
+        # (カーネルの各係数にかける入力ピクセル, 受容野) @ (勾配受容野, 出力チャンネル) = (カーネルの各係数にかける入力ピクセル, 出力チャンネル)
         dW = self.col.T @ dout
         dW = dW.permute(1, 0).reshape(FN, C, FH, FW)
-
+        # (勾配受容野, 出力チャンネル) @ (出力チャンネル, カーネルの各係数) = (勾配受容野, カーネルの各係数)
         dcol = dout @ self.col_W.T
         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
         
