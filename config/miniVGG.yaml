@@ -1,6 +1,6 @@
 model:
   name: miniVGG
-  input_size: 150528        # (3,224,224)
+  input_size: 27        # (3,3,3)
   output_size: 10
   save_sample_size: 1
 
@@ -11,7 +11,7 @@ model:
     # ==========================
     - type: Convolution
       # (3,32,32) -> (64,32,32)
-      out_features: 65536
+      out_features: 576
       in_channels: 3
       out_channels: 64
       kernel_h: 3
@@ -30,7 +30,7 @@ model:
     # ==========================
     - type: Convolution
       # (64,32,32) -> (64,32,32)
-      out_features: 65536
+      out_features: 576
       in_channels: 64
       out_channels: 64
       kernel_h: 3
@@ -57,7 +57,7 @@ model:
     # ==========================
     - type: Convolution
       # (64,16,16) -> (128,16,16)
-      out_features: 32768
+      out_features: 1152
       in_channels: 64
       out_channels: 128
       kernel_h: 3
@@ -76,7 +76,7 @@ model:
     # ==========================
     - type: Convolution
       # (128,16,16) -> (128,16,16)
-      out_features: 32768
+      out_features: 1152
       in_channels: 128
       out_channels: 128
       kernel_h: 3
@@ -103,7 +103,7 @@ model:
     # ==========================
     - type: Convolution
       # (128,8,8) -> (256,8,8)
-      out_features: 16384
+      out_features: 2304
       in_channels: 128
       out_channels: 256
       kernel_h: 3
@@ -122,7 +122,7 @@ model:
     # ==========================
     - type: Convolution
       # (256,8,8) -> (256,8,8)
-      out_features: 16384
+      out_features: 2304
       in_channels: 256
       out_channels: 256
       kernel_h: 3
@@ -144,7 +144,7 @@ model:
     # ==========================
     - type: Convolution
       # (256,8,8) -> (256,8,8)
-      out_features: 16384
+      out_features: 2304
       in_channels: 256
       out_channels: 256
       kernel_h: 3

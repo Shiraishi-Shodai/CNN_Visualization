@@ -84,7 +84,14 @@ def build_convolution(layer_cfg, fan_in):
     weight_init = get_initializer(layer_cfg["initializer"]["weight"])
     bias_init = get_initializer(layer_cfg["initializer"]["bias"])
 
-    weight = weight_init(kernel, fan_in, fan_out)
+    weight = weight_init(kernel, 
+                         (layer_cfg["in_channels"] * layer_cfg["kernel_h"] * layer_cfg["kernel_w"]), 
+                         fan_out)
+    
+    # weight = weight_init(kernel, 
+    #                     fan_in,
+    #                     fan_out)
+    
     bias = bias_init((layer_cfg["out_channels"], ))
     
     return Convolution(weight, bias, stride, padding), fan_out
@@ -111,7 +118,7 @@ def build_max_pooling(layer_cfg, fan_in):
     return MaxPooling(pool_h, pool_w, stride, padding), fan_out
 
 @register("Flatten")
-def build_relu(layer_cfg, fan_in):
+def build_flatten(layer_cfg, fan_in):
     """Flattenを生成する
     Parameters
     ----------
@@ -126,7 +133,7 @@ def build_relu(layer_cfg, fan_in):
     return Flatten(), fan_out
 
 @register("Dropout")
-def build_relu(layer_cfg, fan_in):
+def build_dropout(layer_cfg, fan_in):
     """Dropoutを生成する
     Parameters
     ----------

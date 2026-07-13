@@ -73,8 +73,9 @@ class Trainer:
         for i, layer in enumerate(self.model.layers):
             print(f"===== layer ====== {layer.__class__.__name__}")
             for param, grad in zip(layer.params, layer.grads):
-                print(f"params : max {torch.max(torch.abs(param))}, mean {torch.mean(torch.abs(param))} shape {param.shape}")
-                print(f"grads:  max {torch.max(torch.abs(grad))}, mean {torch.mean(torch.abs(grad))} shape {grad.shape}")
+                # print(f"params : max {torch.max(torch.abs(param))}, min{torch.min(torch.abs(param))}, mean {torch.mean(torch.abs(param))} shape {param.shape}")
+                # print(f"grads:  max {torch.max(torch.abs(grad))}, min{torch.min(torch.abs(grad))}, mean {torch.mean(torch.abs(grad))} shape {grad.shape}")
+                print(f"更新率: {torch.mean(torch.abs(grad)) / torch.mean(torch.abs(param)) * 100}%")
     
     def evaluate(self, validation_loader, mode="Test"):
         """Evaluate, Test実行用関数

@@ -236,3 +236,4 @@ def plot_imgs(data, num_cols, save_filename, axes_title=True, title=None):
 #     l2_norm = torch.sqrt(sum([grad.item() ** 2 for grad in grads]))
     
 #     return l2_norm
+

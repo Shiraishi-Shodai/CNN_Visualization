@@ -43,7 +43,7 @@ def main():
     
     classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     
-    train_subset = Subset(train_data, list(range(trainer_config["subset"]))) if trainer_config["sample"] else train_data
+    train_subset = Subset(train_data, list(range(trainer_config["subset"]))) if "subset" in trainer_config.keys() else train_data
     # data loaderの作成
     train_loader = torch.utils.data.DataLoader(
         train_subset,
@@ -52,7 +52,6 @@ def main():
         )
     
     print(f"使用する学習データ数 {len(train_loader.dataset)}") # データ数
-
     # 損失関数の定義
     criterion = SoftmaxWithLoss()
     recorder = Recorder()

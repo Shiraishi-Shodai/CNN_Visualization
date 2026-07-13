@@ -12,7 +12,9 @@ class ReLU():
         """
         """
         self.x = x
-        return torch.where(self.x > 0, self.x, 0)
+        out = torch.where(self.x > 0, self.x, 0)
+        # print(f"ReLUで0になる割合 : {(len(out.flatten()) - torch.count_nonzero(out).item()) / len(out.flatten()) * 100}%")
+        return out
     
     def backward(self, dout=1):
         return torch.where(self.x > 0, dout, 0)
@@ -34,7 +36,7 @@ class Affine:
         W, b = self.params
         dx = dout @ W.T
         dW = self.x.T @ dout
-        db = torch.sum(dout, dim=0, keepdim=True)
+        db = torch.sum(dout, dim=0)
 
         self.grads[0][...] = dW
         self.grads[1][...] = db
@@ -139,6 +141,11 @@ class Convolution:
         self.col = col
         self.col_W = col_W
         
+        # print(f"mean     : {out.mean():.6f}")
+        # print(f"abs mean : {out.abs().mean():.6f}")
+        # print(f"std      : {out.std():.6f}")
+        # print(f"max      : {out.max():.6f}")
+        # print(f"min      : {out.min():.6f}")
         return out
     
     def backward(self, dout):
