@@ -4,6 +4,7 @@ from yaml import safe_load
 from pathlib import Path
 import math
 from matplotlib import pyplot as plt
+import japanize_matplotlib
 
 def load_yaml(yaml_file : Path):
     """yamlの読み込み
@@ -228,12 +229,67 @@ def plot_imgs(data, num_cols, save_filename, axes_title=True, title=None):
     fig.suptitle(title)
     plt.savefig(save_filename)
 
-# def calc_l2_norm(grads: torch.tensor):
-#     l2_norm = 0
+def plot_imgsWithLabel(data, correct_labels, pred_labels, num_cols, save_filename, axes_title=True, title="正解と予測の描画"):
+    """予測した画像とラベルを描画する
+    Parameter
+    ---------
+    data : images
+    num_cols : 横方向に描画する画像の枚数
+    save_filename : 保存するファイル名
+    """
     
-#     if grads.dim != 1:
-#         grads = grads.flatten()
-#     l2_norm = torch.sqrt(sum([grad.item() ** 2 for grad in grads]))
+    display_img = None
+    cmap = None
+    channel_nums = 1
+    N = len(data) # 描画する画像の枚数
+    rows = math.ceil(N / num_cols) # 余りも含めて表示できる行数
+    fig, axes = plt.subplots(rows, num_cols)
+    if axes.ndim == 1:
+        axes = axes.reshape(1, -1)
+
+    # プロット時は余りのデータまで
+    for r in range(rows):
+        for c in range(num_cols):
+            idx = r * num_cols + c
+            if idx >= N :
+                fig.delaxes(axes[r, c]) # 描画する画像の枚数よりも大きなidxを持つaxは一つずつ削除
+                continue
+            tensor_img = data[idx]
+
+            display_img = tensor_to_display_image(tensor_img) # 描画用画像を取得
+            channel_nums = display_img.shape[0] # cmapを取得
+            cmap = get_cmap(channel_nums)
+            axes[r, c].imshow(display_img, cmap=cmap)
+            axes[r, c].axis("off")
+            if axes_title:
+                color = "yellowgreen" if correct_labels[idx] == pred_labels[idx] else "red"
+                axes[r, c].set_title(f"Correct : {correct_labels[idx]}\nPred : {pred_labels[idx]}", color=color)
+    if axes_title:
+        fig.tight_layout() # 各axisが重ならないように設定
+    fig.suptitle(title)
+    plt.savefig(save_filename)
+
+
+def view_train_valid_history(train_scores, valid_scores, train_losses, valid_losses, filename="public/img/score_loss.png"):
+    assert len(train_scores) == len(valid_scores)
+    assert len(train_losses) == len(valid_losses)
     
-#     return l2_norm
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    epochs = torch.arange(1, len(train_scores) + 1)
+    axes[0].plot(epochs, train_scores, label="train", color="blue")
+    axes[0].plot(epochs, valid_scores, label="valid", color="red")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Score")
+    axes[0].set_title("Accuracy")
+    axes[0].legend()
+    
+    axes[1].plot(epochs, train_losses, label="train", color="blue")
+    axes[1].plot(epochs, valid_losses, label="valid", color="red")
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("Loss")
+    axes[1].set_title("Loss")
+    axes[1].legend()
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close(fig)
 

@@ -16,10 +16,19 @@ class Trainer:
         self.recorder = recorder
         self.classes = classes
         self.history = {
-            "accuracy" : [],
-            "loss" : [],
-            "l2_params": [],
-            "l2_grads": []
+            "train" : {
+                "accuracy" : [],
+                "loss" : [],
+                "l2_params": [],
+                "l2_grads": [] 
+            },
+            
+            "evaluate" : {
+                "accuracy" : [],
+                "loss" : [],
+                "l2_params": [],
+                "l2_grads": []
+            }
         }
         self.should_record = False
         self.current_epoch = None
@@ -53,41 +62,59 @@ class Trainer:
     #         if (epoch + 1) % verbose == 0:
     #             print(f"Epoch [{epoch + 1}/{max_epochs}] Accuracy : {avg_accuracy}% Loss : {avg_loss}")
     
-    def fit(self, train_loader):
+    def fit(self, train_loader, validation_loader):
         """Train実行用関数
         """
+        print(f"========Train and Evaluate Start!!!!========")
         for epoch in range(self.trainer_config["max_epochs"]):
             self.should_record = (epoch + 1) % self.trainer_config["verbose"] == 0
             self.current_epoch = epoch + 1
+            
+            # 学習
             score, loss, l2_params, l2_grads = self._run_epoch(
                 train_loader,
-                train=True,
+                mode="train",
                 desc=f"Train {self.current_epoch}/{self.trainer_config["max_epochs"]}"
             )
             
-            self.history["accuracy"].append(score)
-            self.history["loss"].append(loss)
-            self.history["l2_params"].append(l2_params)
-            self.history["l2_grads"].append(l2_grads)
+            self.history["train"]["accuracy"].append(score)
+            self.history["train"]["loss"].append(loss)
+            self.history["train"]["l2_params"].append(l2_params)
+            self.history["train"]["l2_grads"].append(l2_grads)
             
-        for i, layer in enumerate(self.model.layers):
-            print(f"===== layer ====== {layer.__class__.__name__}")
-            for param, grad in zip(layer.params, layer.grads):
-                # print(f"params : max {torch.max(torch.abs(param))}, min{torch.min(torch.abs(param))}, mean {torch.mean(torch.abs(param))} shape {param.shape}")
-                # print(f"grads:  max {torch.max(torch.abs(grad))}, min{torch.min(torch.abs(grad))}, mean {torch.mean(torch.abs(grad))} shape {grad.shape}")
-                print(f"更新率: {torch.mean(torch.abs(grad)) / torch.mean(torch.abs(param)) * 100}%")
-    
-    def evaluate(self, validation_loader, mode="Test"):
-        """Evaluate, Test実行用関数
+            # 検証
+            score, loss, l2_params, l2_grads = self._run_epoch(
+                validation_loader,
+                mode="evaluate",
+                desc=f"Evaluate {self.current_epoch}/{self.trainer_config["max_epochs"]}"
+            )
+        
+            self.history["evaluate"]["accuracy"].append(score)
+            self.history["evaluate"]["loss"].append(loss)
+            self.history["evaluate"]["l2_params"].append(l2_params)
+            self.history["evaluate"]["l2_grads"].append(l2_grads)
+            
+        # for i, layer in enumerate(self.model.layers):
+        #     print(f"===== layer ====== {layer.__class__.__name__}")
+        #     for param, grad in zip(layer.params, layer.grads):
+        #         # print(f"params : max {torch.max(torch.abs(param))}, min{torch.min(torch.abs(param))}, mean {torch.mean(torch.abs(param))} shape {param.shape}")
+        #         # print(f"grads:  max {torch.max(torch.abs(grad))}, min{torch.min(torch.abs(grad))}, mean {torch.mean(torch.abs(grad))} shape {grad.shape}")
+        #         print(f"更新率: {torch.mean(torch.abs(grad)) / torch.mean(torch.abs(param)) * 100}%")
+
+    def prediction(self, test_loader):
+        """Test実行用関数
         """
-        self.should_record = True
-        score, loss, l2_params, l2_grads = self._run_epoch(
-            validation_loader,
-            train=False,
-            desc=f"{mode} mode"
+        print(f"========Test Start!!!!========")
+        
+        self.current_epoch = 0
+        
+        score, loss, last_x, last_t, last_pred = self._run_epoch(
+            test_loader,
+            mode="test",
+            desc=f"Evaluate {self.current_epoch}/{self.trainer_config["max_epochs"]}"
         )
         
-        return score, loss
+        return score, loss, last_x, last_t, last_pred
             
     def _train_step(self, x, t):
         """"1回分のTrain処理を実装(パラメータ更新あり)
@@ -118,43 +145,42 @@ class Trainer:
         
         return pred, loss
     
-    def _step(self, train, x, t):
-        if train:
+    def _step(self, x, t, mode="train"):
+        if mode == "train":
             return self._train_step(x, t)
         return self._eval_step(x, t)
 
-    def _run_epoch(self, dataloader, train=True, desc=""):
+    def _run_epoch(self, dataloader, mode="train", desc=""):
         """1エポック分の処理内容を実装
         """
         epoch_loss = 0
         epoch_accuracy = 0
         epoch_l2_params = 0
         epoch_l2_grads = 0
-        mode = "train" if train else "eval"
         pbar = tqdm(dataloader, desc=desc)
-        is_target = False
         cond = 1 == 0 
         
         for x, t in pbar:
             # CPU or CUDAをセット
             x = x.to(self.device)
             t = t.to(self.device)
-            
+
             # 画像描画するラベルを取得
-            cond = self.trainer_config["plot_img_idx"] == t
-            plot_img_idx = cond.nonzero(as_tuple=True)[0][0].item() if len(cond.nonzero(as_tuple=True)[0]) > 0 else None
-            # 画像描画するラベルが含まれていれば、1epochに1度だけ記録する
-            # plot_img_idxにラベルが入っているとき、バッチ内に記録対象のバッチがあることを意味する
-            if plot_img_idx:
-                with self.recorder.record(TrainerMetadata(self.model.name, mode, self.current_epoch, self.trainer_config["batch_size"], plot_img_idx), self.should_record):
-                    with self.model.hook_manager.register([self.recorder.forward_hook], self.should_record):
-                        # Train or Evaluate, Testの1エポック分の処理を実行
-                        pred, loss = self._step(train, x, t)
-                        self.should_record = False
-            else:
-                # Train or Evaluate, Testの1エポック分の処理を実行
-                pred, loss = self._step(train, x, t)
-                
+            # cond = self.trainer_config["plot_img_idx"] == t
+            # plot_img_idx = cond.nonzero(as_tuple=True)[0][0].item() if len(cond.nonzero(as_tuple=True)[0]) > 0 else None
+            # # 画像描画するラベルが含まれていれば、1epochに1度だけ記録する
+            # # plot_img_idxにラベルが入っているとき、バッチ内に記録対象のバッチがあることを意味する
+            # if plot_img_idx:
+            #     with self.recorder.record(TrainerMetadata(self.model.name, mode, self.current_epoch, self.trainer_config["batch_size"], plot_img_idx), self.should_record):
+            #         with self.model.hook_manager.register([self.recorder.forward_hook], self.should_record):
+            #             # Train or Evaluate, Testの1エポック分の処理を実行
+            #             pred, loss = self._step(x, t, mode)
+            #             self.should_record = False
+            # else:
+            #     # Train or Evaluate, Testの1エポック分の処理を実行
+            #     pred, loss = self._step(x, t, mode)
+            
+            pred, loss = self._step(x, t, mode)
             score = accuracy(pred, t)
             epoch_loss += loss
             epoch_accuracy += score
@@ -164,7 +190,13 @@ class Trainer:
                 "accuracy" : score
             })
         
+        if mode in ["train", "evaluate"]:
+            epoch_l2_params = sum([param.detach().clone().cpu().norm(p=2).item() for param in self.model.params])
+            epoch_l2_grads = sum([grads.detach().clone().cpu().norm(p=2).item() for grads in self.model.grads])
+            return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader), epoch_l2_params, epoch_l2_grads
         
-        epoch_l2_params = sum([param.detach().clone().cpu().norm(p=2).item() for param in self.model.params])
-        epoch_l2_grads = sum([grads.detach().clone().cpu().norm(p=2).item() for grads in self.model.grads])
-        return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader), epoch_l2_params, epoch_l2_grads
+        if mode in ["test"]:
+            last_x = x
+            last_t = t
+            last_pred = pred
+            return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader), last_x.detach().cpu(), last_t.detach().cpu(), last_pred
