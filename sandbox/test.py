@@ -224,13 +224,9 @@ from custom_dataclasses import EpochMetrics
 # r = [getattr(o, "accuracy") for o in h1]
 # print(r)
 
-trainer_config = load_yaml("config/train.yaml")["train"]
-f = []
+# a = torch.tensor([1.8, 10.1])
+# print(torch.floor(a * 100) / 100)
 
-for i in trainer_config["plots"]:
-    if not i["enabled"]:
-        continue
-    
-    f.append(i)
-
-print(f)
+a = torch.tensor([1, 0, 2, 2, 1, 3, 3, 3])
+print(torch.bincount(a, minlength=10))
+print(type(torch.bincount(a)))

@@ -322,6 +322,7 @@ def plot_metrics(ax, epochs, train_value, valid_value, title, ylabel):
     ax.plot(epochs, train_value, label="train")
     ax.plot(epochs, valid_value, label="valid")
     ax.set_ylabel(ylabel)
+    ax.set_xlabel("Epoch")
     ax.set_title(title)
     ax.legend()
 
@@ -365,8 +366,8 @@ def confusion_matrix_calc(confusion_matrix, metrics="total accuracy"):
             # float()で小数の割り算を実現。clampで0で割ることを防ぐ(クラスごとのaccuracyの計算にも使える)
             correct = confusion_matrix.diag().float()
             total = confusion_matrix.sum(dim=1).clamp(min=1)
-            score = correct / total
-            return math.floor(score * 100) / 100
+            score = (correct / total) * 100 * 100 # 切り捨てるように10000をかける
+            return torch.floor(score) / 100
 
 def view_confusion_matrix(train_confusion_matrix, valid_confusion_matrix, ticks, save_filename):
     """学習・検証のconfusion_matrixを表示
@@ -396,3 +397,66 @@ def view_confusion_matrix(train_confusion_matrix, valid_confusion_matrix, ticks,
     plt.tight_layout()
     plt.savefig(save_filename)
     plt.close(fig)
+
+def view_class_accuracy(train_class_accuracy, valid_class_accuracy, ticks, save_filename):
+    """混同行列からクラスごとの正解率を棒グラフで表示する
+    """
+    class_accuracy_dict = {
+        "Train": train_class_accuracy,
+        "Valid": valid_class_accuracy
+    }
+    
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+    for ax, (title, class_accuracy) in zip(axes, class_accuracy_dict.items()):
+        sns.barplot(
+            x=ticks,
+            y=class_accuracy,
+            ax=ax,
+        )
+        
+        ax.set_xlabel("Accuracy by class")
+        ax.set_title(title)
+    
+    plt.savefig(save_filename)
+    plt.close(fig)
+
+def view_label_distribution(train_labels, valid_labels, test_labels, ticks, save_filename):
+    """dataloader内の各ラベルの個数を表示する(分布に偏りがないか確かめるため)
+    """
+    
+    label_dict = {
+        "Train": train_labels,
+        "Valid": valid_labels,
+        "Test": test_labels
+    }
+    
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+    for ax, (title, labels) in zip(axes, label_dict.items()):
+        sns.barplot(
+            x=ticks,
+            y=labels,
+            ax=ax
+        )
+        
+        ax.set_xlabel("class")
+        ax.set_ylabel("data num")
+        ax.set_title(title)
+    
+    plt.tight_layout()
+    plt.savefig(save_filename)
+    plt.close(fig)
+    
+def get_dataset_labels(dataset):
+    """datasetからlabelリストを取得する
+       datasetがSubsetでも問題なし
+    """
+    labels = []
+
+    for _, label in dataset:
+        labels.append(label)
+    
+    return labels
+    
+    
