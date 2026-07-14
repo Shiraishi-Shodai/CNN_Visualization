@@ -38,3 +38,23 @@ class Record:
     layer_records: list[LayerRecord] = field(default_factory=list)
     param_records: list[ParamRecord] = field(default_factory=list)
     gradient_records: list[GradientRecord] = field(default_factory=list)
+    
+@dataclass
+class EpochMetrics:
+    """EpochMetrics … エポックごとの時系列データ
+    """
+    loss: float
+    accuracy: float
+
+@dataclass
+class EvaluationMetrics:
+    """EpochMetrics … エポック終了時の評価データ
+    """
+    confusion_matrix: torch.Tensor
+    class_accuracy: torch.Tensor # クラスごとの正解率
+
+@dataclass
+class LastMiniBatch:
+    x : torch.Tensor
+    t : torch.Tensor
+    pred : torch.Tensor

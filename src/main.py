@@ -1,7 +1,7 @@
 import math
 from layers import Affine, ReLU, SoftmaxWithLoss
 import torch
-from utils import softmax, cross_entropy_error, load_yaml, plot_imgsWithLabel, view_train_valid_history
+from utils import softmax, cross_entropy_error, load_yaml, plot_imgsWithLabel, plot_epoch_metrics, view_confusion_matrix
 from pathlib import Path
 from sequential import Sequential
 from optimizer import SGD
@@ -94,8 +94,6 @@ def main():
         shuffle=False
     )
     
-    
-    
     # 損失関数の定義
     criterion = SoftmaxWithLoss()
     recorder = Recorder()
@@ -110,34 +108,39 @@ def main():
     optimizer = ob.build(model.params)
     # trainerのビルド
     trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes)
+    # Epochごとにplotする指標
+    epoch_plots = trainer_config["epoch_plots"]
     
     # 学習・検証
     trainer.fit(train_loader=train_loader, validation_loader=valid_loader)
-    # # 学習・兼用結果の出力
-    view_train_valid_history(trainer.history["train"]["accuracy"], 
-                             trainer.history["evaluate"]["accuracy"], 
-                             trainer.history["train"]["loss"], 
-                             trainer.history["evaluate"]["loss"]
-                             )
+    
+    # 学習と検証の混同行列の取得
+    train_cm = trainer.history.get_evaluation_metrics("train").confusion_matrix
+    valid_cm= trainer.history.get_evaluation_metrics("valid").confusion_matrix
+    
+    # 学習・検証結果の出力(Epochごと)
+    plot_epoch_metrics(trainer.history.train, trainer.history.valid, epoch_plots, "public/img/train_valid_score_loss.png")
+    # 学習・検証結果の出力(全Epochを通して)
+    view_confusion_matrix(train_cm, valid_cm, classes, "public/img/train_valid_confusion_matrix.png")
     
     # テスト
-    score, loss, last_x, last_t, last_pred = trainer.prediction(test_loader)
-    view_images_num = 16
+    # score, loss, last_x, last_t, last_pred = trainer.prediction(test_loader)
+    # view_images_num = 16
     
-    if len(last_t) < view_images_num:
-        view_images_num = len(last_t)
+    # if len(last_t) < view_images_num:
+    #     view_images_num = len(last_t)
     
-    correct_labels = [classes[label] for label in last_t]
-    pred_labels = [classes[label] for label in last_pred]
-    print(f"Accuracy : {score * 100 :.2f}%, Loss : {loss}")
-    plot_imgsWithLabel(data=last_x[:view_images_num], 
-                       correct_labels=correct_labels[:view_images_num], 
-                       pred_labels=pred_labels[:view_images_num], 
-                       num_cols=4, 
-                       save_filename="public/img/test_result.png",
-                       axes_title=True,
-                       title=""
-                       )
+    # correct_labels = [classes[label] for label in last_t]
+    # pred_labels = [classes[label] for label in last_pred]
+    # print(f"Accuracy : {score * 100 :.2f}%, Loss : {loss}")
+    # plot_imgsWithLabel(data=last_x[:view_images_num], 
+    #                    correct_labels=correct_labels[:view_images_num], 
+    #                    pred_labels=pred_labels[:view_images_num], 
+    #                    num_cols=4, 
+    #                    save_filename="public/img/test_result.png",
+    #                    axes_title=True,
+    #                    title=""
+    #                    )
     
 if __name__ == "__main__":
     main()

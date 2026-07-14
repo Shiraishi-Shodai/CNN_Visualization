@@ -5,6 +5,7 @@ from pathlib import Path
 import math
 from matplotlib import pyplot as plt
 import japanize_matplotlib
+import seaborn as sns
 
 def load_yaml(yaml_file : Path):
     """yamlの読み込み
@@ -270,26 +271,128 @@ def plot_imgsWithLabel(data, correct_labels, pred_labels, num_cols, save_filenam
     plt.savefig(save_filename)
 
 
-def view_train_valid_history(train_scores, valid_scores, train_losses, valid_losses, filename="public/img/score_loss.png"):
-    assert len(train_scores) == len(valid_scores)
-    assert len(train_losses) == len(valid_losses)
+# def view_train_valid_history(train_metrics, valid_metrics, filename="public/img/score_loss.png"):
+#     train_scores = [i.accuracy for i in train_metrics]
+#     valid_scores = [i.accuracy for i in valid_metrics]
+#     train_losses = [i.loss for i in train_metrics]
+#     valid_losses = [i.loss for i in valid_metrics]
     
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    epochs = torch.arange(1, len(train_scores) + 1)
-    axes[0].plot(epochs, train_scores, label="train", color="blue")
-    axes[0].plot(epochs, valid_scores, label="valid", color="red")
-    axes[0].set_xlabel("Epoch")
-    axes[0].set_ylabel("Score")
-    axes[0].set_title("Accuracy")
-    axes[0].legend()
+#     assert len(train_scores) == len(valid_scores)
+#     assert len(train_losses) == len(valid_losses)
     
-    axes[1].plot(epochs, train_losses, label="train", color="blue")
-    axes[1].plot(epochs, valid_losses, label="valid", color="red")
-    axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Loss")
-    axes[1].set_title("Loss")
-    axes[1].legend()
+#     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+#     epochs = torch.arange(1, len(train_scores) + 1)
+#     axes[0].plot(epochs, train_scores, label="train", color="blue")
+#     axes[0].plot(epochs, valid_scores, label="valid", color="red")
+#     axes[0].set_xlabel("Epoch")
+#     axes[0].set_ylabel("Score")
+#     axes[0].set_title("Accuracy")
+#     axes[0].legend()
+    
+#     axes[1].plot(epochs, train_losses, label="train", color="blue")
+#     axes[1].plot(epochs, valid_losses, label="valid", color="red")
+#     axes[1].set_xlabel("Epoch")
+#     axes[1].set_ylabel("Loss")
+#     axes[1].set_title("Loss")
+#     axes[1].legend()
+#     plt.tight_layout()
+#     plt.savefig(filename)
+#     plt.close(fig)
+
+def extract_metric(metrics, attr):
+    """EpochMetricsからプロパティをリストにして返す
+    """
+    return [getattr(m, attr) for m in metrics]
+
+def filter_metrics(plots):
+    """表示対象の指標のみフィルター
+    """
+    enabled_plots = []
+    for plot_dict in plots:
+        if not plot_dict["enabled"]:
+            continue
+        
+        enabled_plots.append(plot_dict)
+    
+    return enabled_plots
+
+def plot_metrics(ax, epochs, train_value, valid_value, title, ylabel):
+    """一つの指標をプロット(train, valid)
+    """
+    ax.plot(epochs, train_value, label="train")
+    ax.plot(epochs, valid_value, label="valid")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend()
+
+def plot_epoch_metrics(train_metrics, valid_metrics, plots, save_filename):
+    """Epochごとの指標をプロット
+    横軸: Epoch
+    縦軸: plotsで与える任意の指標(accuracyなど)
+    """
+    enabled_plots = filter_metrics(plots)
+    fig, axes = plt.subplots(1, len(enabled_plots), figsize=(10, 4))
+    epochs = torch.arange(len(train_metrics))
+    
+    for ax, plot_dict in zip(axes, enabled_plots):
+        attr = plot_dict["metric"]
+        title = plot_dict["title"]
+        ylabel = plot_dict["ylabel"]
+        
+        train_value = extract_metric(train_metrics, attr)
+        valid_value = extract_metric(valid_metrics, attr)
+        
+        assert len(train_value) == len(valid_value)
+        
+        plot_metrics(ax, epochs, train_value, valid_value, title, ylabel)
+    
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(save_filename)
     plt.close(fig)
 
+def confusion_matrix_calc(confusion_matrix, metrics="total accuracy"):
+    """混同行列からaccuracyなどを計算する関数
+    """
+    match metrics:
+        case "total accuracy":
+            # float()で小数の割り算を実現。clampで0で割ることを防ぐ(クラスごとのaccuracyの計算にも使える)
+            correct = torch.sum(confusion_matrix.diag().float()).item()
+            total = torch.sum(confusion_matrix.sum(dim=1).clamp(min=1)).item()
+            score = correct / total
+            return math.floor(score * 100) / 100
+        
+        case "class accuracy":
+            # float()で小数の割り算を実現。clampで0で割ることを防ぐ(クラスごとのaccuracyの計算にも使える)
+            correct = confusion_matrix.diag().float()
+            total = confusion_matrix.sum(dim=1).clamp(min=1)
+            score = correct / total
+            return math.floor(score * 100) / 100
+
+def view_confusion_matrix(train_confusion_matrix, valid_confusion_matrix, ticks, save_filename):
+    """学習・検証のconfusion_matrixを表示
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    
+    cm_dict = {
+        "Train": train_confusion_matrix,
+        "Valid": valid_confusion_matrix
+    }
+    
+    for ax, (title, cm) in zip(axes, cm_dict.items()):
+        
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            ax=ax,
+            xticklabels=ticks,
+            yticklabels=ticks
+        )
+        ax.set_xlabel("Prediction")
+        ax.set_ylabel("True")
+        ax.set_title(title)
+    
+    plt.tight_layout()
+    plt.savefig(save_filename)
+    plt.close(fig)

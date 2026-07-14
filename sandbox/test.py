@@ -23,10 +23,11 @@ import torch
 from matplotlib import pyplot as plt
 from torchvision import datasets, transforms
 import math
-from utils import plot_imgs
+from utils import plot_imgs, load_yaml
 from dataclasses import dataclass
 import glob
 import os
+from custom_dataclasses import EpochMetrics
 
 # train_data = datasets.CIFAR10(
 #     root="data/cifar10", 
@@ -197,9 +198,39 @@ import os
 # print(torch.count_nonzero(a).item())
 # print((len(a.flatten()) - torch.count_nonzero(a).item()) / len(a.flatten()))
 
-bias = torch.arange(10)
-db = torch.ones((1, 10))
-print(bias)
-print(db)
+# bias = torch.arange(10)
+# db = torch.ones((1, 10))
+# print(bias)
+# print(db)
 
-print(bias - db)
+# print(bias - db)
+
+# a = torch.arange(9).reshape(3, -1)
+# b = torch.arange(9).reshape(3, -1)
+
+# # print(b)
+# # print(b.diag())
+# # print(a.clamp(min=1))
+# # print(a.float())
+# print(a)
+
+# print(round(torch.sum(b.diag().float()).item() / torch.sum(a.sum(dim=1).clamp(min=1)).item(), 2))
+# print(math.floor(9.999 * 100) / 100)
+
+# e1 = EpochMetrics(10, 2, torch.zeros((2, 2)))
+# e2 = EpochMetrics(30, 1, torch.zeros((2, 2)))
+
+# h1 = [e1, e2]
+# r = [getattr(o, "accuracy") for o in h1]
+# print(r)
+
+trainer_config = load_yaml("config/train.yaml")["train"]
+f = []
+
+for i in trainer_config["plots"]:
+    if not i["enabled"]:
+        continue
+    
+    f.append(i)
+
+print(f)

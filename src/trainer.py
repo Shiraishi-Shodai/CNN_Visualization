@@ -1,8 +1,8 @@
-from utils import accuracy
+from utils import accuracy, confusion_matrix_calc
 import torch
 from tqdm import tqdm
-from custom_dataclasses import TrainerMetadata
-
+from custom_dataclasses import TrainerMetadata, EpochMetrics, EvaluationMetrics
+from history import History
 class Trainer:
 
     def __init__(self, model, optimizer, criterion, device, trainer_config, recorder, classes):
@@ -15,21 +15,7 @@ class Trainer:
         self.trainer_config = trainer_config
         self.recorder = recorder
         self.classes = classes
-        self.history = {
-            "train" : {
-                "accuracy" : [],
-                "loss" : [],
-                "l2_params": [],
-                "l2_grads": [] 
-            },
-            
-            "evaluate" : {
-                "accuracy" : [],
-                "loss" : [],
-                "l2_params": [],
-                "l2_grads": []
-            }
-        }
+        self.history = History(trainer_config["class_num"])
         self.should_record = False
         self.current_epoch = None
     
@@ -65,35 +51,25 @@ class Trainer:
     def fit(self, train_loader, validation_loader):
         """Train実行用関数
         """
-        print(f"========Train and Evaluate Start!!!!========")
+        print(f"========Train and Valid Start!!!!========")
         for epoch in range(self.trainer_config["max_epochs"]):
             self.should_record = (epoch + 1) % self.trainer_config["verbose"] == 0
             self.current_epoch = epoch + 1
             
             # 学習
-            score, loss, l2_params, l2_grads = self._run_epoch(
+            self._run_epoch(
                 train_loader,
                 mode="train",
                 desc=f"Train {self.current_epoch}/{self.trainer_config["max_epochs"]}"
             )
-            
-            self.history["train"]["accuracy"].append(score)
-            self.history["train"]["loss"].append(loss)
-            self.history["train"]["l2_params"].append(l2_params)
-            self.history["train"]["l2_grads"].append(l2_grads)
-            
+                        
             # 検証
-            score, loss, l2_params, l2_grads = self._run_epoch(
+            self._run_epoch(
                 validation_loader,
-                mode="evaluate",
-                desc=f"Evaluate {self.current_epoch}/{self.trainer_config["max_epochs"]}"
+                mode="valid",
+                desc=f"Valid {self.current_epoch}/{self.trainer_config["max_epochs"]}"
             )
-        
-            self.history["evaluate"]["accuracy"].append(score)
-            self.history["evaluate"]["loss"].append(loss)
-            self.history["evaluate"]["l2_params"].append(l2_params)
-            self.history["evaluate"]["l2_grads"].append(l2_grads)
-            
+                
         # for i, layer in enumerate(self.model.layers):
         #     print(f"===== layer ====== {layer.__class__.__name__}")
         #     for param, grad in zip(layer.params, layer.grads):
@@ -153,10 +129,12 @@ class Trainer:
     def _run_epoch(self, dataloader, mode="train", desc=""):
         """1エポック分の処理内容を実装
         """
-        epoch_loss = 0
-        epoch_accuracy = 0
+        epoch_metrics = EpochMetrics(0.0, 0.0)
+        history_metrics = self.history.get_metrics(mode)
+        history_evaluation_metrics = self.history.get_evaluation_metrics(mode)
         epoch_l2_params = 0
         epoch_l2_grads = 0
+        
         pbar = tqdm(dataloader, desc=desc)
         cond = 1 == 0 
         
@@ -182,21 +160,33 @@ class Trainer:
             
             pred, loss = self._step(x, t, mode)
             score = accuracy(pred, t)
-            epoch_loss += loss
-            epoch_accuracy += score
+            
+            # 混同行列の更新
+            for label, pred in zip(t, pred):
+                history_evaluation_metrics.confusion_matrix[label, pred] += 1
+
+            # バッチごとにmetricsを加算
+            epoch_metrics.accuracy += score
+            epoch_metrics.loss += loss
 
             pbar.set_postfix({
                 "loss" : loss,
                 "accuracy" : score
             })
         
-        if mode in ["train", "evaluate"]:
-            epoch_l2_params = sum([param.detach().clone().cpu().norm(p=2).item() for param in self.model.params])
-            epoch_l2_grads = sum([grads.detach().clone().cpu().norm(p=2).item() for grads in self.model.grads])
-            return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader), epoch_l2_params, epoch_l2_grads
+        # dataloader内に存在するミニバッチの個数で割る
+        epoch_metrics.accuracy = epoch_metrics.accuracy / len(dataloader)
+        epoch_metrics.loss = epoch_metrics.loss / len(dataloader)
+        
+        # epochごとにリストに追加する指標をappend
+        history_metrics.append(epoch_metrics)
+        # if mode in ["train", "evaluate"]:
+        #     # epoch_l2_params = sum([param.detach().clone().cpu().norm(p=2).item() for param in self.model.params])
+        #     # epoch_l2_grads = sum([grads.detach().clone().cpu().norm(p=2).item() for grads in self.model.grads])
+        #     return history_metrics
         
         if mode in ["test"]:
             last_x = x
             last_t = t
             last_pred = pred
-            return epoch_accuracy / len(dataloader), epoch_loss / len(dataloader), last_x.detach().cpu(), last_t.detach().cpu(), last_pred
+            return epoch_metrics.accuracy, epoch_metrics.loss, last_x.detach().cpu(), last_t.detach().cpu(), last_pred
