@@ -85,7 +85,7 @@ def build_convolution(layer_cfg, fan_in):
     bias_init = get_initializer(layer_cfg["initializer"]["bias"])
 
     weight = weight_init(kernel, 
-                         (layer_cfg["in_channels"] * layer_cfg["kernel_h"] * layer_cfg["kernel_w"]), 
+                         layer_cfg["in_channels"] * layer_cfg["kernel_h"] * layer_cfg["kernel_w"], 
                          fan_out)
     
     # weight = weight_init(kernel, 

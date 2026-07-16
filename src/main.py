@@ -102,39 +102,44 @@ def main():
     view_label_distribution(train_labels, valid_labels, test_labels, classes, "public/img/label_distribute.png")
     
     # 損失関数の定義
-    # criterion = SoftmaxWithLoss()
-    # recorder = Recorder()
-    # hook_manager = HookManager()
-    # # モデルのビルド
-    # mb = ModelBuilder(model_config)
-    # layers = mb.build()
-    # model = Sequential(model_config["model"]["name"], layers, hook_manager)
-    # model.to(device)
-    # # optimizerのビルド
-    # ob = OptimizerBuilder(optimizer_config)
-    # optimizer = ob.build(model.params)
-    # # trainerのビルド
-    # trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes)
-    # # Epochごとにplotする指標
-    # epoch_plots = trainer_config["epoch_plots"]
+    criterion = SoftmaxWithLoss()
+    recorder = Recorder()
+    hook_manager = HookManager()
+    # モデルのビルド
+    mb = ModelBuilder(model_config)
+    layers = mb.build()
+    model = Sequential(model_config["model"]["name"], layers, hook_manager)
+    # モデルのデバイスをセット
+    model.to(device)
+    # optimizerのビルド
+    ob = OptimizerBuilder(optimizer_config)
+    optimizer = ob.build(model.params)
+    # Epochごとにplotする指標
+    epoch_plots = trainer_config["epoch_plots"]
+    # trainerのビルド
+    trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes)
     
-    # # 学習・検証
-    # trainer.fit(train_loader=train_loader, validation_loader=valid_loader)
+    # 学習・検証
+    trainer.fit(train_loader=train_loader, validation_loader=valid_loader)
     
-    # # 学習と検証の混同行列の取得
-    # train_cm = trainer.history.get_evaluation_metrics("train").confusion_matrix
-    # valid_cm= trainer.history.get_evaluation_metrics("valid").confusion_matrix
+    # 学習と検証の混同行列の取得
+    train_cm = trainer.history.get_evaluation_metrics("train").confusion_matrix
+    valid_cm= trainer.history.get_evaluation_metrics("valid").confusion_matrix
     
-    # # 学習・検証のクラスごとの正解率を取得
-    # train_class_accuracy = confusion_matrix_calc(train_cm, "class accuracy")
-    # valid_class_accuracy = confusion_matrix_calc(valid_cm, "class accuracy")
+    # 学習・検証のクラスごとの正解率を取得
+    train_class_accuracy = confusion_matrix_calc(train_cm, "class accuracy")
+    valid_class_accuracy = confusion_matrix_calc(valid_cm, "class accuracy")
     
-    # # 学習・検証結果の出力(Epochごと)
-    # plot_epoch_metrics(trainer.history.train, trainer.history.valid, epoch_plots, "public/img/train_valid_score_loss.png")
+    # for i in range(len(train_class_accuracy)):
+    #     print(f"{classes[i]}: {train_class_accuracy[i]}, {train_cm[i, i] / train_cm[i].sum() * 100}")
+    #     print(f"{classes[i]}: {valid_class_accuracy[i]}, {valid_cm[i, i] / valid_cm[i].sum() * 100}")
     
-    # # 学習・検証結果の出力(全Epochを通して)
-    # view_confusion_matrix(train_cm, valid_cm, classes, "public/img/train_valid_confusion_matrix.png")
-    # view_class_accuracy(train_class_accuracy, valid_class_accuracy, classes, "public/img/train_valid_class_accuracy.png")
+    # 学習・検証結果の出力(Epochごと)
+    plot_epoch_metrics(trainer.history.train, trainer.history.valid, epoch_plots, "public/img/train_valid_score_loss.png")
+    
+    # 学習・検証結果の出力(全Epochを通して)
+    view_confusion_matrix(train_cm, valid_cm, classes, "public/img/train_valid_confusion_matrix.png")
+    view_class_accuracy(train_class_accuracy, valid_class_accuracy, classes, "public/img/train_valid_class_accuracy.png")
 
     # テスト
     # score, loss, last_x, last_t, last_pred = trainer.prediction(test_loader)

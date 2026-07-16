@@ -55,6 +55,24 @@ class Sequential:
                 layer.params[i] = layer.params[i].to(device)
                 layer.grads[i] = layer.grads[i].to(device)
     
+    def train(self):
+        """layersを学習モードに切り替える
+        """
+        for layer in self.layers:
+            if not hasattr(layer, "train"):
+                continue
+            
+            layer.train = True
+        
+    def eval(self):
+        """layersを推論モードに切り替える
+        """
+        for layer in self.layers:
+            if not hasattr(layer, "train"):
+                continue
+            
+            layer.train = False
+            
     def forward(self, x):
         ctx = None
         y = None

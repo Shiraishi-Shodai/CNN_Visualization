@@ -243,15 +243,48 @@ class Dropout:
         self.grads = []
         self.dropout_rate = dropout_rate
         self.mask = None
+        self.train = True
     
-    def forward(self, x, mode="train"):
+    def forward(self, x):
         
-        if mode == "train":
+        if self.train:
             self.mask = torch.rand_like(x) > self.dropout_rate
-            return x * self.mask
+            return (x * self.mask) / (1 - self.dropout_rate)
         else:
-            return x * (1.0 - self.dropout_rate)
+            return x
     
     def backward(self, dout):
-        return dout * self.mask
+        return (dout * self.mask) / (1 - self.dropout_rate)
+
+class BatchNorm:
+    """チャネルごとに平均する。各チャネルにそれぞれ抽出している特徴を持つため
+    """
+    def __init__(self, gamma, beta, epsilon):
+        """
+        Parameters
+        -----------
+        gamma: (C, H, W)
+        beta : (C, H, W)
+        """
+        self.params = [gamma, beta]
+        self.grads = [torch.zeros_like(gamma.shape), torch.zeros_like(beta.shape)]
+        self.epsilon = epsilon
+
+    def forward(self, x):
+        """
+        Parameters
+        -----------
+        x: (N, C, H, W)
+        
+        Returns
+        ----------
+        x_normalized: (N, C, H, W)
+        """
+        gamma, beta = self.params
+        
+        mean = x.mean(dim=(0, 2, 3), keepdim=True)
+        std = x.std(dim=(0, 2, 3), keepdim=True)
+
+        x_normalized = (x - mean) / ((std**2 + self.epsilon)**0.5)
+        return gamma * x_normalized + beta
     

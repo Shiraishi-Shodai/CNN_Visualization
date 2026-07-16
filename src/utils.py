@@ -359,15 +359,15 @@ def confusion_matrix_calc(confusion_matrix, metrics="total accuracy"):
             # float()で小数の割り算を実現。clampで0で割ることを防ぐ(クラスごとのaccuracyの計算にも使える)
             correct = torch.sum(confusion_matrix.diag().float()).item()
             total = torch.sum(confusion_matrix.sum(dim=1).clamp(min=1)).item()
-            score = correct / total
-            return math.floor(score * 100) / 100
+            score = (correct / total) * 100
+            return score
         
         case "class accuracy":
             # float()で小数の割り算を実現。clampで0で割ることを防ぐ(クラスごとのaccuracyの計算にも使える)
             correct = confusion_matrix.diag().float()
             total = confusion_matrix.sum(dim=1).clamp(min=1)
-            score = (correct / total) * 100 * 100 # 切り捨てるように10000をかける
-            return torch.floor(score) / 100
+            score = (correct / total) * 100
+            return score
 
 def view_confusion_matrix(train_confusion_matrix, valid_confusion_matrix, ticks, save_filename):
     """学習・検証のconfusion_matrixを表示

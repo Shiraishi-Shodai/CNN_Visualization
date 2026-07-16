@@ -132,12 +132,18 @@ class Trainer:
         epoch_metrics = EpochMetrics(0.0, 0.0)
         history_metrics = self.history.get_metrics(mode)
         history_evaluation_metrics = self.history.get_evaluation_metrics(mode)
-        epoch_l2_params = 0
-        epoch_l2_grads = 0
+        # epoch_l2_params = 0
+        # epoch_l2_grads = 0
         
         pbar = tqdm(dataloader, desc=desc)
-        cond = 1 == 0 
+        # cond = 1 == 0 
         
+        # モデルのモードを切り替え
+        if mode == "train":
+            self.model.train()
+        else:
+            self.model.eval()
+
         for x, t in pbar:
             # CPU or CUDAをセット
             x = x.to(self.device)
