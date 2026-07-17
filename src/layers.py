@@ -301,7 +301,7 @@ class BatchNorm:
                 mean = x.mean(dim=(0, 2, 3), keepdim=True)
                 variance = x.var(dim=(0, 2, 3), keepdim=True) + self.epsilon
                 std = torch.sqrt(variance)
-                x_hat = (x - mean) / std
+                x_hat = (x - mean) / std # (x - mean) * ( 1 / std)
                 
                 if self.layernorm == 0:
                     # バッチごとの移動平均を更新(Epochにまたがる)
@@ -340,13 +340,17 @@ class BatchNorm:
         dbeta = torch.sum(dout, dim=self.layernorm)
 
         dydx_hat = dout * gamma
-        dx_hatdu = -1 / std
-        dx_hatdv = -0.5 * (variance ** (-1.5)) * (x - mean)
-        dx_hatdx = 1 / std
-        dvdx = 2 / N * (x - mean)
-        dvdu = -2 / N * torch.sum(x - mean, dim=0)
-        dudx = 1 / N
-        dx = dydx_hat * dx_hatdx + torch.sum(dydx_hat * dx_hatdu, dim=0) * dudx + \
+        dx_hatdμ = -1 / std # x_hatに対するμについての微分
+        dx_hatdv = -0.5 * (variance ** (-1.5)) * (x - mean) # x_hatに対する分散についての微分 (-1.5 = -2/3)
+        dx_hatdx = 1 / std # x_hatに対するxについての微分(μとσは定数として扱う)
+        dvdx = 2 / N * (x - mean) # 分散に対するxについての微分
+        dvdu = -2 / N * torch.sum(x - mean, dim=0) # 分散に対するμについての微分
+        dudx = 1 / N # μに対するxについての微分
+        
+        # doutに対するxの微分(doutに対するxの直接経路 + doutに対する平均を経由する経路 + doutに対する分散を経由する経路)
+        # 複数の経路がある場合は、すべての経路の勾配を足し算する
+        dx = dydx_hat * dx_hatdx + \
+            torch.sum(dydx_hat * dx_hatdμ, dim=0) * dudx + \
             torch.sum(dydx_hat * dx_hatdv, dim=0) * (dvdx + dvdu * dudx)
         
         return dx, dgamma, dbeta
