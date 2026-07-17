@@ -259,7 +259,7 @@ class Dropout:
 class BatchNorm:
     """チャネルごとに平均する。各チャネルにそれぞれ抽出している特徴を持つため
     """
-    def __init__(self, gamma, beta, epsilon):
+    def __init__(self, gamma, beta, epsilon, momentum, layernorm):
         """
         Parameters
         -----------
@@ -269,6 +269,12 @@ class BatchNorm:
         self.params = [gamma, beta]
         self.grads = [torch.zeros_like(gamma.shape), torch.zeros_like(beta.shape)]
         self.epsilon = epsilon
+        self.momentum = momentum
+        self.layernorm = layernorm
+        self.train = True
+        self.cache = None
+        self.running_mean = None
+        self.running_var = None
 
     def forward(self, x):
         """
@@ -281,10 +287,66 @@ class BatchNorm:
         x_normalized: (N, C, H, W)
         """
         gamma, beta = self.params
+        N, C, H, W = x.shape
+        out = None
         
-        mean = x.mean(dim=(0, 2, 3), keepdim=True)
-        std = x.std(dim=(0, 2, 3), keepdim=True)
+        if self.running_mean is None:
+            self.running_mean = torch.zeros((1, C, 1, 1), dtype=x.dtype)
 
-        x_normalized = (x - mean) / ((std**2 + self.epsilon)**0.5)
-        return gamma * x_normalized + beta
+        if self.running_var is None:
+            self.running_var = torch.zeros((1, C, 1, 1), dtype=x.dtype)
+        
+        match self.train:
+            case True:
+                mean = x.mean(dim=(0, 2, 3), keepdim=True)
+                variance = x.var(dim=(0, 2, 3), keepdim=True) + self.epsilon
+                std = torch.sqrt(variance)
+                x_hat = (x - mean) / std
+                
+                if self.layernorm == 0:
+                    # バッチごとの移動平均を更新(Epochにまたがる)
+                    self.running_mean = self.running_mean * self.momentum + mean * self.momentum
+                    self.running_var = self.running_var * self.momentum + variance * self.momentum
+                    
+                    self.cache = (x, mean, variance, x_hat, gamma, std)
+                
+                out = gamma * x_hat + beta
+
+            case False:
+                
+                out = gamma * (x - self.running_mean) / (torch.sqrt(self.running_var + self.epsilon)) + beta
+            case _:
+                raise ValueError(f"BatchNormのモードがおかしいよ→ {self.train}")
+        
+        return out
     
+    def backward(self, dout):
+        """逆伝搬
+        
+        Parameters
+        -----------
+        dout : 前の層の勾配
+        
+        Returns
+        -----------
+        dx   : 入力に対する勾配
+        """
+        
+        dx, dgamma, dbeta = None, None, None
+        x, mean, variance, x_hat, gamma, std = self.cache
+        
+        N = 1.0 * dout.shape[0]
+        dgamma = torch.sum(dout * x_hat, dim=self.layernorm)
+        dbeta = torch.sum(dout, dim=self.layernorm)
+
+        dydx_hat = dout * gamma
+        dx_hatdu = -1 / std
+        dx_hatdv = -0.5 * (variance ** (-1.5)) * (x - mean)
+        dx_hatdx = 1 / std
+        dvdx = 2 / N * (x - mean)
+        dvdu = -2 / N * torch.sum(x - mean, dim=0)
+        dudx = 1 / N
+        dx = dydx_hat * dx_hatdx + torch.sum(dydx_hat * dx_hatdu, dim=0) * dudx + \
+            torch.sum(dydx_hat * dx_hatdv, dim=0) * (dvdx + dvdu * dudx)
+        
+        return dx, dgamma, dbeta
