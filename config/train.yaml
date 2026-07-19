@@ -28,7 +28,7 @@ train:
     ylabel: Loss
     enabled: true
 
-  - metric: precision
-    title: Precision
-    ylabel: Precision
-    enabled: false
+  # - metric: precision
+  #   title: Precision
+  #   ylabel: Precision
+  #   enabled: false

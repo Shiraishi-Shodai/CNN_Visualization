@@ -259,7 +259,7 @@ class Dropout:
 class BatchNorm:
     """チャネルごとに平均する。各チャネルにそれぞれ抽出している特徴を持つため
     """
-    def __init__(self, gamma, beta, epsilon, momentum, layernorm):
+    def __init__(self, gamma, beta, epsilon, momentum):
         """
         Parameters
         -----------
@@ -267,17 +267,46 @@ class BatchNorm:
         beta : (C, H, W)
         """
         self.params = [gamma, beta]
-        self.grads = [torch.zeros_like(gamma.shape), torch.zeros_like(beta.shape)]
+        self.grads = [torch.zeros_like(gamma), torch.zeros_like(beta)]
         self.epsilon = epsilon
         self.momentum = momentum
-        self.layernorm = layernorm
         self.train = True
         self.cache = None
         self.running_mean = None
         self.running_var = None
+    
+    def _get_reduce_dims(self, x):
+        """標準化する軸を返す
+        """
+        if x.ndim == 2:
+            return (0,)
+        elif x.ndim == 4:
+            return (0, 2, 3)
+        else:
+            raise ValueError(f"xの次元を確認してね: {x.shape}")
+    
+    def _get_n(self, x, dims):
+        """平均に使用するNを計算。入力xによって値が変わるため
+        """
+        n = 1
+        
+        for dim in dims:
+            n *= x.shape[dim]
+        
+        return n
+
+    
+    def _get_running_shape(self, x, dims):
+        """バッチごとの平均や標準偏差を格納するテンソルの次元を返す
+        """
+        running_shape = tuple([1 if i in dims else x.shape[i] for i in range(x.ndim)])
+        return running_shape
 
     def forward(self, x):
         """
+        BatchNormは各特徴量ごとに標準化を行う
+        Affineであれば(N, D) → N方向に標準化
+        Convolutionであれば(N, C, H, W) → (N, H, W)方向に標準化
         Parameters
         -----------
         x: (N, C, H, W)
@@ -287,30 +316,29 @@ class BatchNorm:
         x_normalized: (N, C, H, W)
         """
         gamma, beta = self.params
-        N, C, H, W = x.shape
+
         out = None
+        dims = self._get_reduce_dims(x) # 標準化する軸を取得
+        running_shape = self._get_running_shape(x, dims)
         
         if self.running_mean is None:
-            self.running_mean = torch.zeros((1, C, 1, 1), dtype=x.dtype)
+            self.running_mean = torch.zeros(running_shape, dtype=x.dtype, device=x.device)
 
         if self.running_var is None:
-            self.running_var = torch.zeros((1, C, 1, 1), dtype=x.dtype)
+            self.running_var = torch.zeros(running_shape, dtype=x.dtype, device=x.device)
         
         match self.train:
             case True:
-                mean = x.mean(dim=(0, 2, 3), keepdim=True)
-                variance = x.var(dim=(0, 2, 3), keepdim=True) + self.epsilon
+                mean = x.mean(dim=dims, keepdim=True)
+                variance = x.var(dim=dims, keepdim=True) + self.epsilon
                 std = torch.sqrt(variance)
                 x_hat = (x - mean) / std # (x - mean) * ( 1 / std)
-                
-                if self.layernorm == 0:
-                    # バッチごとの移動平均を更新(Epochにまたがる)
-                    self.running_mean = self.running_mean * self.momentum + mean * self.momentum
-                    self.running_var = self.running_var * self.momentum + variance * self.momentum
+                # バッチごとの移動平均を更新(Epochにまたがる)
+                self.running_mean = self.momentum * self.running_mean + (1 - self.momentum) * mean
+                self.running_var = self.momentum * self.running_var + (1 - self.momentum) * variance
                     
-                    self.cache = (x, mean, variance, x_hat, gamma, std)
-                
-                out = gamma * x_hat + beta
+                self.cache = (x, mean, variance, x_hat, std)
+                out = gamma * x_hat + beta # ブロードキャスト問題、gammaとbetaのshapeを整える
 
             case False:
                 
@@ -333,24 +361,30 @@ class BatchNorm:
         """
         
         dx, dgamma, dbeta = None, None, None
-        x, mean, variance, x_hat, gamma, std = self.cache
+        x, mean, variance, x_hat, std = self.cache
+        gamma, beta = self.params 
         
-        N = 1.0 * dout.shape[0]
-        dgamma = torch.sum(dout * x_hat, dim=self.layernorm)
-        dbeta = torch.sum(dout, dim=self.layernorm)
+        dims = self._get_reduce_dims(x) # 標準化する軸を取得
+        N = 1.0 * self._get_n(x, dims) # 平均に使用するNを取得
+
+        dgamma = torch.sum(dout * x_hat, dim=dims, keepdim=True)
+        dbeta = torch.sum(dout, dim=dims, keepdim=True)
 
         dydx_hat = dout * gamma
         dx_hatdμ = -1 / std # x_hatに対するμについての微分
-        dx_hatdv = -0.5 * (variance ** (-1.5)) * (x - mean) # x_hatに対する分散についての微分 (-1.5 = -2/3)
+        dx_hatdv = -0.5 * (variance ** (-1.5)) * (x - mean) # x_hatに対する分散についての微分 (-1.5 = -3/2)
         dx_hatdx = 1 / std # x_hatに対するxについての微分(μとσは定数として扱う)
         dvdx = 2 / N * (x - mean) # 分散に対するxについての微分
-        dvdu = -2 / N * torch.sum(x - mean, dim=0) # 分散に対するμについての微分
-        dudx = 1 / N # μに対するxについての微分
+        dvdu = -2 / N * torch.sum(x - mean, dim=dims, keepdim=True) # 分散に対するμについての微分
+        dudx = torch.ones_like(x) / N # μに対するxについての微分
         
         # doutに対するxの微分(doutに対するxの直接経路 + doutに対する平均を経由する経路 + doutに対する分散を経由する経路)
         # 複数の経路がある場合は、すべての経路の勾配を足し算する
+
         dx = dydx_hat * dx_hatdx + \
-            torch.sum(dydx_hat * dx_hatdμ, dim=0) * dudx + \
-            torch.sum(dydx_hat * dx_hatdv, dim=0) * (dvdx + dvdu * dudx)
+            torch.sum(dydx_hat * dx_hatdμ, dim=dims, keepdim=True) * dudx + \
+            torch.sum(dydx_hat * dx_hatdv, dim=dims, keepdim=True) * (dvdx + dvdu * dudx)
         
-        return dx, dgamma, dbeta
+        self.grads[0][...] = dgamma
+        self.grads[1][...] = dbeta
+        return dx

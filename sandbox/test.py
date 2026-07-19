@@ -227,6 +227,31 @@ from custom_dataclasses import EpochMetrics
 # a = torch.tensor([1.8, 10.1])
 # print(torch.floor(a * 100) / 100)
 
-a = torch.tensor([1, 0, 2, 2, 1, 3, 3, 3])
-print(torch.bincount(a, minlength=10))
-print(type(torch.bincount(a)))
+# a = torch.tensor([1, 0, 2, 2, 1, 3, 3, 3])
+# print(torch.bincount(a, minlength=10))
+# print(type(torch.bincount(a)))
+
+
+# a = torch.arange(3*4*5).reshape(3, 4, -1)
+# dims = (0, 2)
+# n = 1
+
+# for i in dims:
+#     # print(i)
+#     # print(a.shape[i])
+#     n *= a.shape[i]
+#     print(n)
+
+# a = torch.arange(2*3*4*5).reshape(2, 3, 4, 5)
+# b = (0, 2, 3)
+
+# c = tuple([1 if i in b else a.shape[i] for i in range(a.ndim)])
+# print(c)
+
+a = torch.arange(2*3*4*5).reshape(2, 3, 4, 5)
+b = torch.tensor([10, 20, 30]).reshape(1, -1, 1, 1)
+
+c = a + b
+print(c)
+print(a.shape, b.shape)
+print(c.shape)

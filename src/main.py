@@ -25,7 +25,8 @@ def main():
     print(f"使用するデバイス {device}")    
 
     # ハイパーパラメータの読み込み
-    model_config = load_yaml("config/miniVGG.yaml")
+    # model_config = load_yaml("config/miniVGG.yaml")
+    model_config = load_yaml("config/miniCNN.yaml")
     trainer_config = load_yaml("config/train.yaml")["train"]
     optimizer_config = load_yaml("config/optimizer.yaml")
 

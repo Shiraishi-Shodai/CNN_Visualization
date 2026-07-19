@@ -38,6 +38,10 @@ def zeros_initializer(shape, fan_in=None, fan_out=None):
     # return nn.Parameter(torch.tensor(np.zeros(shape).astype("float32")), requires_grad=False)
     return nn.Parameter(torch.zeros(size=shape, dtype=torch.float32), requires_grad=False)
 
+@register("ones")
+def ones_initializer(shape, fan_in=None, fan_out=None):
+    return nn.Parameter(torch.ones(shape, dtype=torch.float32), requires_grad=False)
+
 def get_initializer(name):
     if name not in INITIALIZERS:
         raise ValueError(f"{name}は登録されていません")

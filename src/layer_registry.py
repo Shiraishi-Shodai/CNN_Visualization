@@ -147,3 +147,34 @@ def build_dropout(layer_cfg, fan_in):
     fan_out = fan_in
     dropout_rate = layer_cfg["dropout_rate"]
     return Dropout(dropout_rate), fan_out
+
+
+@register("BatchNorm")
+def build_batchnorm(layer_cfg, fan_in):
+    """BatchNormを生成する
+    Parameters
+    ----------
+    layer_cfg : layerのconfig
+    fan_in : 入力値の次元数(ニューロン数)
+    
+    Returns
+    -------
+    layer : 生成したlayer
+    """
+    fan_out = fan_in
+    gamma_init = get_initializer(layer_cfg["initializer"]["gamma"])
+    beta_init = get_initializer(layer_cfg["initializer"]["beta"])
+    momentum = float(layer_cfg["momentum"])
+    epsilon = float(layer_cfg["epsilon"])
+
+    before_layer = layer_cfg["before_layer"]
+    
+    match before_layer:
+        case "Affine":   
+            gamma = gamma_init((layer_cfg["feature_shape"], ))
+            beta = beta_init((layer_cfg["feature_shape"], ))
+        case "Convolution":
+            gamma = gamma_init((1, layer_cfg["feature_shape"], 1, 1))
+            beta = beta_init((1, layer_cfg["feature_shape"], 1, 1))
+    
+    return BatchNorm(gamma=gamma, beta=beta, epsilon=epsilon, momentum=momentum), fan_out
