@@ -1,5 +1,5 @@
 model:
-  name: miniVGG
+  name: miniCNN
   input_size: 3072        # (3, 32, 32)
   output_size: 10
   save_sample_size: 1

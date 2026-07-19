@@ -84,13 +84,13 @@ class Trainer:
         
         self.current_epoch = 0
         
-        score, loss, last_x, last_t, last_pred = self._run_epoch(
+        last_x, last_t, last_pred = self._run_epoch(
             test_loader,
             mode="test",
             desc=f"Evaluate {self.current_epoch}/{self.trainer_config["max_epochs"]}"
         )
         
-        return score, loss, last_x, last_t, last_pred
+        return last_x, last_t, last_pred
             
     def _train_step(self, x, t):
         """"1回分のTrain処理を実装(パラメータ更新あり)
@@ -165,11 +165,11 @@ class Trainer:
             #     pred, loss = self._step(x, t, mode)
             
             pred, loss = self._step(x, t, mode)
-            score = accuracy(pred, t)
+            score = accuracy(pred, t)            
             
             # 混同行列の更新
-            for label, pred in zip(t, pred):
-                history_evaluation_metrics.confusion_matrix[label, pred] += 1
+            for label, p in zip(t, pred):
+                history_evaluation_metrics.confusion_matrix[label, p] += 1
 
             # バッチごとにmetricsを加算
             epoch_metrics.accuracy += score
@@ -195,4 +195,4 @@ class Trainer:
             last_x = x
             last_t = t
             last_pred = pred
-            return epoch_metrics.accuracy, epoch_metrics.loss, last_x.detach().cpu(), last_t.detach().cpu(), last_pred
+            return last_x.detach().cpu(), last_t.detach().cpu(), last_pred

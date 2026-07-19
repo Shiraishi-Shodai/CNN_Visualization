@@ -143,23 +143,25 @@ def main():
     view_class_accuracy(train_class_accuracy, valid_class_accuracy, classes, "public/img/train_valid_class_accuracy.png")
 
     # テスト
-    # score, loss, last_x, last_t, last_pred = trainer.prediction(test_loader)
-    # view_images_num = 16
+    last_x, last_t, last_pred = trainer.prediction(test_loader)
+    view_images_num = 16
+    test_score = trainer.history.test[0].accuracy
+    test_loss = trainer.history.test[0].loss
     
-    # if len(last_t) < view_images_num:
-    #     view_images_num = len(last_t)
+    if len(last_t) < view_images_num:
+        view_images_num = len(last_t)
     
-    # correct_labels = [classes[label] for label in last_t]
-    # pred_labels = [classes[label] for label in last_pred]
-    # print(f"Accuracy : {score * 100 :.2f}%, Loss : {loss}")
-    # plot_imgsWithLabel(data=last_x[:view_images_num], 
-    #                    correct_labels=correct_labels[:view_images_num], 
-    #                    pred_labels=pred_labels[:view_images_num], 
-    #                    num_cols=4, 
-    #                    save_filename="public/img/test_result.png",
-    #                    axes_title=True,
-    #                    title=""
-    #                    )
+    correct_labels = [classes[label] for label in last_t]
+    pred_labels = [classes[label] for label in last_pred]
+    print(f"Accuracy : {test_score * 100 :.2f}%, Loss : {test_loss}")
+    plot_imgsWithLabel(data=last_x[:view_images_num], 
+                       correct_labels=correct_labels[:view_images_num], 
+                       pred_labels=pred_labels[:view_images_num], 
+                       num_cols=4, 
+                       save_filename="public/img/test_result.png",
+                       axes_title=True,
+                       title=""
+                       )
     
 if __name__ == "__main__":
     main()
