@@ -263,8 +263,8 @@ class BatchNorm:
         """
         Parameters
         -----------
-        gamma: (C, H, W)
-        beta : (C, H, W)
+        gamma: (C,)
+        beta : (C,)
         """
         self.params = [gamma, beta]
         self.grads = [torch.zeros_like(gamma), torch.zeros_like(beta)]
@@ -325,13 +325,13 @@ class BatchNorm:
             self.running_mean = torch.zeros(running_shape, dtype=x.dtype, device=x.device)
 
         if self.running_var is None:
-            self.running_var = torch.zeros(running_shape, dtype=x.dtype, device=x.device)
+            self.running_var = torch.ones(running_shape, dtype=x.dtype, device=x.device)
         
         match self.train:
             case True:
                 mean = x.mean(dim=dims, keepdim=True)
-                variance = x.var(dim=dims, keepdim=True) + self.epsilon
-                std = torch.sqrt(variance)
+                variance = x.var(dim=dims, keepdim=True, correction=0)
+                std = torch.sqrt(variance + self.epsilon)
                 x_hat = (x - mean) / std # (x - mean) * ( 1 / std)
                 # バッチごとの移動平均を更新(Epochにまたがる)
                 self.running_mean = self.momentum * self.running_mean + (1 - self.momentum) * mean
@@ -342,7 +342,7 @@ class BatchNorm:
 
             case False:
                 
-                out = gamma * (x - self.running_mean) / (torch.sqrt(self.running_var + self.epsilon)) + beta
+                out = gamma * (x - self.running_mean) / (torch.sqrt(self.running_var)) + beta
             case _:
                 raise ValueError(f"BatchNormのモードがおかしいよ→ {self.train}")
         

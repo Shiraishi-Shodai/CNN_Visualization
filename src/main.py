@@ -33,6 +33,10 @@ def main():
     # transformの定義
     transform = transforms.Compose([
         transforms.ToTensor(),
+        transforms.Normalize(
+        mean=(0.4914, 0.4822, 0.4465),
+        std=(0.2470, 0.2435, 0.2616)
+        ),
         transforms.Resize((32, 32)),
     ])
     
