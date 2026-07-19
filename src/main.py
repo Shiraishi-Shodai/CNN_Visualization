@@ -31,46 +31,70 @@ def main():
     optimizer_config = load_yaml("config/optimizer.yaml")
 
     # transformの定義
-    transform = transforms.Compose([
+    train_transform = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(p=0.5),
         transforms.ToTensor(),
-        transforms.Normalize(
-        mean=(0.4914, 0.4822, 0.4465),
-        std=(0.2470, 0.2435, 0.2616)
-        ),
+        # transforms.Normalize(
+        # mean=(0.4914, 0.4822, 0.4465),
+        # std=(0.2470, 0.2435, 0.2616)
+        # ),
+        # transforms.Resize((32, 32)),
+    ])
+
+    test_transform = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(),
         transforms.Resize((32, 32)),
     ])
     
     # データの読み込み
-    train_data = datasets.CIFAR10(
+    full_train_data = datasets.CIFAR10(
         root="data/cifar10", 
         train=True, 
         download=True, 
-        transform=transform,
+        transform=train_transform,
     )
     
     test_data = datasets.CIFAR10(
         root="data/cifar10",
         train=False,
         download=True,
-        transform=transform,
+        transform=test_transform,
     )
     
     classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     
     # 学習・検証データの準備
-    train_data_size = len(train_data)
-    train_subset = Subset(train_data, list(range( int(train_data_size * trainer_config["subset"])))) if "subset" in trainer_config.keys() else train_data
-    train_subset_size = len(train_subset)
-    train_size = int(train_subset_size * trainer_config["train_size"])
-    valid_size = int(train_subset_size - train_size)
+    train_data_size = len(full_train_data)
+    train_valid_subset = Subset(full_train_data, list(range( int(train_data_size * trainer_config["subset"])))) if "subset" in trainer_config.keys() else full_train_data
+    train_valid_subset_size = len(train_valid_subset)
+    train_size = int(train_valid_subset_size * trainer_config["train_size"])
+    valid_size = int(train_valid_subset_size - train_size)
     
-    train_dataset, valid_dataset = random_split(
-        train_subset,
+    train_indices, valid_indices = random_split(
+        range(train_valid_subset_size),
         [train_size, valid_size],
         generator=generator
     )
+    
+    train_data = datasets.CIFAR10(
+        root="data/cifar10",
+        train=True,
+        transform=train_transform
+    )
 
-    print(f"trainサブセット : {train_subset_size}, 学習 : {train_size}, 検証 : {valid_size}")
+    valid_data = datasets.CIFAR10(
+        root="data/cifar10",
+        train=True,
+        transform=test_transform
+    )
+
+    train_dataset = Subset(train_data, train_indices.indices)
+    valid_dataset = Subset(valid_data, valid_indices.indices)
+    
+    print(f"trainサブセット : {train_valid_subset_size}, 学習 : {train_size}, 検証 : {valid_size}")
     # print(f"trainサブセット : {train_subset_size}, 学習 : {len(train_dataset)}, 検証 : {len(valid_dataset)}")
     
     # テストデータの準備
