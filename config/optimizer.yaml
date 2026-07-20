@@ -1,7 +1,9 @@
 optimizer:
 #   type : "SGD"
 #   lr : 0.01
+    # weight_decay : 0.01
 
   type : "Momentum"
-  lr : 0.01
+  lr : 0.06
   mu : 0.8
+  weight_decay : 0.0005

@@ -1,0 +1,21 @@
+model:
+  name: VGG16
+  # input_size: 150528        # (3,224,224)
+  # output_size: 1000
+  input_size: 75        # (3,224,224)
+  output_size: 100
+
+  layers:
+
+  - type: Convolution
+    # (3,5,5) -> (4,5,5)
+    out_features: 100
+    in_channels: 3
+    out_channels: 4
+    kernel_h: 3
+    kernel_w: 3
+    stride: 1
+    padding: 1
+    initializer : 
+      weight : "he"
+      bias : "zeros"

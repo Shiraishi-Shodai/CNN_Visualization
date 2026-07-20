@@ -28,6 +28,7 @@ from dataclasses import dataclass
 import glob
 import os
 from custom_dataclasses import EpochMetrics
+from pathlib import Path
 
 # train_data = datasets.CIFAR10(
 #     root="data/cifar10", 
@@ -248,10 +249,35 @@ from custom_dataclasses import EpochMetrics
 # c = tuple([1 if i in b else a.shape[i] for i in range(a.ndim)])
 # print(c)
 
-a = torch.arange(2*3*4*5).reshape(2, 3, 4, 5)
-b = torch.tensor([10, 20, 30]).reshape(1, -1, 1, 1)
+# a = torch.arange(2*3*4*5).reshape(2, 3, 4, 5)
+# b = torch.tensor([10, 20, 30]).reshape(1, -1, 1, 1)
 
-c = a + b
-print(c)
-print(a.shape, b.shape)
-print(c.shape)
+# c = a + b
+# print(c)
+# print(a.shape, b.shape)
+# print(c.shape)
+
+from datetime import datetime
+import shutil
+# a = [torch.arange(2*3*4).reshape(2, 3, 4)]
+# print(f"a : {a}")
+# torch.save(a, f="sample.pth")
+
+# b = torch.load("sample.pth")
+# print(f"b : {b}")
+
+dt = datetime.now()
+experiment_dir = Path(dt.strftime("%Y%m%d_%H%M%S"))
+manage_dirs = ["models", "config"]
+
+for dir in manage_dirs:
+    if dir == "config":
+        original_config_dir = Path("config")
+        shutil.copytree(
+            "config",
+            experiment_dir / "config",
+            dirs_exist_ok=True
+        )
+        continue
+    
+    Path(fr"{experiment_dir}/{dir}").mkdir(parents=True, exist_ok=True)

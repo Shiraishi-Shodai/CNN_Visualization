@@ -18,12 +18,14 @@ def get_optimizer_builder(name):
 @register("SGD")
 def build_SGD(params, optimizer_config):
     lr = optimizer_config["lr"]
+    weight_decay = optimizer_config["weight_decay"]
 
-    return SGD(params=params, lr=lr)
+    return SGD(params=params, lr=lr, weight_decay=weight_decay)
 
 @register("Momentum")
 def build_Momentum(params, optimizer_config):
     lr = optimizer_config["lr"]
     mu = optimizer_config["mu"]
+    weight_decay = optimizer_config["weight_decay"]
 
-    return Momentum(params=params, lr=lr, mu=mu)
+    return Momentum(params=params, lr=lr, mu=mu, weight_decay=weight_decay)

@@ -44,7 +44,15 @@ class Sequential:
             grads += layer.grads
         
         return grads
-    
+
+    @property
+    def weight_decay_targets(self):
+        weight_decay_targets = []
+        for layer in self.layers:
+            weight_decay_targets += layer.weight_decay_targets
+        
+        return weight_decay_targets
+            
     def to(self, device):
         """各レイヤーにdeviceをセットする
         """

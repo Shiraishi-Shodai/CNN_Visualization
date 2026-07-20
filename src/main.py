@@ -13,6 +13,8 @@ from recorder import Recorder
 from hook_manager import HookManager
 from optimizer_builder import OptimizerBuilder
 from visualizer import Visualizer
+from experiment_manager import ExperimentManager
+from checkpoint_manager import CheckPointManager
 
 torch.manual_seed(42)
 
@@ -123,13 +125,6 @@ def main():
         shuffle=False
     )
     
-
-    # 各データのラベル分布を表示
-    train_labels = torch.bincount(torch.tensor(get_dataset_labels(train_dataset)), minlength=trainer_config["class_num"])
-    valid_labels = torch.bincount(torch.tensor(get_dataset_labels(valid_dataset)), minlength=trainer_config["class_num"])
-    test_labels = torch.bincount(torch.tensor(get_dataset_labels(test_dataset)), minlength=trainer_config["class_num"])
-    view_label_distribution(train_labels, valid_labels, test_labels, classes, "public/img/label_distribute.png")
-    
     # 損失関数の定義
     criterion = SoftmaxWithLoss()
     recorder = Recorder()
@@ -145,11 +140,24 @@ def main():
     optimizer = ob.build(model.params)
     # Epochごとにplotする指標
     epoch_plots = trainer_config["epoch_plots"]
+    # 学習記録管理用
+    ex_manager = ExperimentManager()
+    # 学習記録管理内のモデル保存・取り出し用
+    ch_manager = CheckPointManager()
     # trainerのビルド
-    trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes)
+    trainer = Trainer(model, optimizer, criterion, device, trainer_config, recorder, classes, ex_manager, ch_manager)
     
     # 学習・検証
     trainer.fit(train_loader=train_loader, validation_loader=valid_loader)
+    
+    # 実験結果の保存
+    trainer.save()
+    
+    # 各データのラベル分布を表示
+    train_labels = torch.bincount(torch.tensor(get_dataset_labels(train_dataset)), minlength=trainer_config["class_num"])
+    valid_labels = torch.bincount(torch.tensor(get_dataset_labels(valid_dataset)), minlength=trainer_config["class_num"])
+    test_labels = torch.bincount(torch.tensor(get_dataset_labels(test_dataset)), minlength=trainer_config["class_num"])
+    view_label_distribution(train_labels, valid_labels, test_labels, classes, fr"{trainer.ex_manager.experiment_sub_dir.imgs}/label_distribute.png")
     
     # 学習と検証の混同行列の取得
     train_cm = trainer.history.get_evaluation_metrics("train").confusion_matrix
@@ -159,34 +167,31 @@ def main():
     train_class_accuracy = confusion_matrix_calc(train_cm, "class accuracy")
     valid_class_accuracy = confusion_matrix_calc(valid_cm, "class accuracy")
     
-    # for i in range(len(train_class_accuracy)):
-    #     print(f"{classes[i]}: {train_class_accuracy[i]}, {train_cm[i, i] / train_cm[i].sum() * 100}")
-    #     print(f"{classes[i]}: {valid_class_accuracy[i]}, {valid_cm[i, i] / valid_cm[i].sum() * 100}")
-    
     # 学習・検証結果の出力(Epochごと)
-    plot_epoch_metrics(trainer.history.train, trainer.history.valid, epoch_plots, "public/img/train_valid_score_loss.png")
+    plot_epoch_metrics(trainer.history.train, trainer.history.valid, epoch_plots, fr"{trainer.ex_manager.experiment_sub_dir.imgs}/train_valid_score_loss.png")
     
     # 学習・検証結果の出力(全Epochを通して)
-    view_confusion_matrix(train_cm, valid_cm, classes, "public/img/train_valid_confusion_matrix.png")
-    view_class_accuracy(train_class_accuracy, valid_class_accuracy, classes, "public/img/train_valid_class_accuracy.png")
+    view_confusion_matrix(train_cm, valid_cm, classes, fr"{trainer.ex_manager.experiment_sub_dir.imgs}/train_valid_confusion_matrix.png")
+    view_class_accuracy(train_class_accuracy, valid_class_accuracy, classes, fr"{trainer.ex_manager.experiment_sub_dir.imgs}/train_valid_class_accuracy.png")
 
     # テスト
     last_x, last_t, last_pred = trainer.prediction(test_loader)
     view_images_num = 16
     test_score = trainer.history.test[0].accuracy
     test_loss = trainer.history.test[0].loss
+    print(f"Accuracy : {test_score * 100 :.2f}%, Loss : {test_loss}")
     
+    # 最後のバッチの予測結果を確認
     if len(last_t) < view_images_num:
         view_images_num = len(last_t)
     
     correct_labels = [classes[label] for label in last_t]
     pred_labels = [classes[label] for label in last_pred]
-    print(f"Accuracy : {test_score * 100 :.2f}%, Loss : {test_loss}")
     plot_imgsWithLabel(data=last_x[:view_images_num], 
                        correct_labels=correct_labels[:view_images_num], 
                        pred_labels=pred_labels[:view_images_num], 
                        num_cols=4, 
-                       save_filename="public/img/test_result.png",
+                       save_filename=fr"{trainer.ex_manager.experiment_sub_dir.imgs}/test_result.png",
                        axes_title=True,
                        title=""
                        )

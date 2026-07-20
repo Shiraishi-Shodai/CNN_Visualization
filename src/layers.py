@@ -7,6 +7,7 @@ class ReLU():
         self.x = None
         self.params = []
         self.grads = []
+        self.weight_decay_targets = []
     
     def forward(self, x):
         """
@@ -23,6 +24,7 @@ class Affine:
     def __init__(self, W, b):
         self.params = [W, b]
         self.grads = [torch.zeros_like(W), torch.zeros_like(b)]
+        self.weight_decay_targets = [True, False]
         self.x = None
     
     def forward(self, x):
@@ -103,6 +105,7 @@ class Convolution:
     def __init__(self, weight, bias, stride=1, pad=0):
         self.params = [weight, bias]
         self.grads = [torch.zeros_like(weight), torch.zeros_like(bias)]
+        self.weight_decay_targets = [True, False]
         self.stride = stride
         self.pad = pad
         
@@ -173,6 +176,7 @@ class MaxPooling:
     def __init__(self, pool_h, pool_w, stride=2, pad=0):
         self.params = []
         self.grads = []
+        self.weight_decay_targets = []
         self.pool_h = pool_h
         self.pool_w = pool_w
         self.stride = stride
@@ -211,6 +215,7 @@ class Flatten:
     def __init__(self):
         self.params = []
         self.grads = []
+        self.weight_decay_targets = []
         self.original_shape = None
     
     def forward(self, x):
@@ -241,6 +246,7 @@ class Dropout:
         
         self.params = []
         self.grads = []
+        self.weight_decay_targets = []
         self.dropout_rate = dropout_rate
         self.mask = None
         self.train = True
@@ -268,6 +274,7 @@ class BatchNorm:
         """
         self.params = [gamma, beta]
         self.grads = [torch.zeros_like(gamma), torch.zeros_like(beta)]
+        self.weight_decay_targets = [False, False]
         self.epsilon = epsilon
         self.momentum = momentum
         self.train = True
@@ -342,7 +349,7 @@ class BatchNorm:
 
             case False:
                 
-                out = gamma * (x - self.running_mean) / (torch.sqrt(self.running_var)) + beta
+                out = gamma * (x - self.running_mean) / (torch.sqrt(self.running_var +self.epsilon)) + beta
             case _:
                 raise ValueError(f"BatchNormのモードがおかしいよ→ {self.train}")
         

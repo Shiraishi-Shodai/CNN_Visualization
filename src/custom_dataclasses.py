@@ -58,3 +58,9 @@ class LastMiniBatch:
     x : torch.Tensor
     t : torch.Tensor
     pred : torch.Tensor
+
+@dataclass
+class ExperimentSubDirs:
+    models: str
+    config: str
+    imgs: str

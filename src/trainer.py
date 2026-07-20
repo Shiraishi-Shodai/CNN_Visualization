@@ -5,7 +5,7 @@ from custom_dataclasses import TrainerMetadata, EpochMetrics, EvaluationMetrics
 from history import History
 class Trainer:
 
-    def __init__(self, model, optimizer, criterion, device, trainer_config, recorder, classes):
+    def __init__(self, model, optimizer, criterion, device, trainer_config, recorder, classes, ex_manager, ch_manager):
         """ハイパーパラメータの初期化
         """
         self.model = model
@@ -18,7 +18,11 @@ class Trainer:
         self.history = History(trainer_config["class_num"])
         self.should_record = False
         self.current_epoch = None
-    
+        # 学習記録管理用
+        self.ex_manager = ex_manager
+        # 学習記録管理内のモデル保存・取り出し用
+        self.ch_manager = ch_manager
+        
     # def fit(self, train_loader, max_epochs=100, verbose=100):
     #     """学習処理
     #     Parameters
@@ -69,7 +73,7 @@ class Trainer:
                 mode="valid",
                 desc=f"Valid {self.current_epoch}/{self.trainer_config["max_epochs"]}"
             )
-                
+        
         # for i, layer in enumerate(self.model.layers):
         #     print(f"===== layer ====== {layer.__class__.__name__}")
         #     for param, grad in zip(layer.params, layer.grads):
@@ -106,7 +110,7 @@ class Trainer:
         # モデルの逆伝搬(勾配の計算)
         self.model.backward(dout)
         # パラメータの更新
-        self.optimizer.update(self.model.params, self.model.grads)
+        self.optimizer.update(self.model.params, self.model.grads, self.model.weight_decay_targets)
         return pred, loss
     
     def _eval_step(self, x, t):
@@ -196,3 +200,10 @@ class Trainer:
             last_t = t
             last_pred = pred
             return last_x.detach().cpu(), last_t.detach().cpu(), last_pred
+        
+    def save(self):
+        self.ex_manager.create()
+        self.ch_manager.save(self.model.params, fr"{self.ex_manager.experiment_sub_dir.models}/model.pth")
+    
+    def load(self, file_path):
+        return self.ch_manager.load(file_path)
