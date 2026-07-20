@@ -10,9 +10,9 @@
 train:
   name : Cifar10
   batch_size : 64
-  max_epochs : 30
+  max_epochs : 10
   train_size : 0.8
-  subset : 0.1
+  subset : 1
   sample : True
   verbose : 2
   plot_img_idx : 2 # 画像を確認するラベル
