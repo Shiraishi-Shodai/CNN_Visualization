@@ -266,18 +266,37 @@ import shutil
 # b = torch.load("sample.pth")
 # print(f"b : {b}")
 
-dt = datetime.now()
-experiment_dir = Path(dt.strftime("%Y%m%d_%H%M%S"))
-manage_dirs = ["models", "config"]
+# dt = datetime.now()
+# experiment_dir = Path(dt.strftime("%Y%m%d_%H%M%S"))
+# manage_dirs = ["models", "config"]
 
-for dir in manage_dirs:
-    if dir == "config":
-        original_config_dir = Path("config")
-        shutil.copytree(
-            "config",
-            experiment_dir / "config",
-            dirs_exist_ok=True
-        )
-        continue
+# for dir in manage_dirs:
+#     if dir == "config":
+#         original_config_dir = Path("config")
+#         shutil.copytree(
+#             "config",
+#             experiment_dir / "config",
+#             dirs_exist_ok=True
+#         )
+#         continue
     
-    Path(fr"{experiment_dir}/{dir}").mkdir(parents=True, exist_ok=True)
+#     Path(fr"{experiment_dir}/{dir}").mkdir(parents=True, exist_ok=True)
+import torch
+from copy import deepcopy
+
+W = torch.tensor([1.0])
+
+params = [W]
+backup = deepcopy(params)
+
+params[0] += 3
+
+
+print(W)
+print(params[0])
+
+params[0].copy_(backup[0])
+# params[0] = backup[0]
+
+print(W)
+print(params[0])

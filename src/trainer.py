@@ -99,6 +99,8 @@ class Trainer:
     def _train_step(self, x, t):
         """"1回分のTrain処理を実装(パラメータ更新あり)
         """
+        # 順伝搬前のoptimizer処理
+        self.optimizer.pre_forward(self.model.params)
         # モデルの順伝搬
         y = self.model.forward(x)
         # 予測値取得(Affine出力の2次元行列 → ラベル行列, Softmaxは通っていないが、値が大きさはSoftmaxを通っても変わらないためAffineの出力から最大値を取っても問題なし)
@@ -109,6 +111,8 @@ class Trainer:
         dout = self.criterion.backward()
         # モデルの逆伝搬(勾配の計算)
         self.model.backward(dout)
+        # パラメータ更新前ののoptimizer処理
+        self.optimizer.pre_update(self.model.params)
         # パラメータの更新
         self.optimizer.update(self.model.params, self.model.grads, self.model.weight_decay_targets)
         return pred, loss

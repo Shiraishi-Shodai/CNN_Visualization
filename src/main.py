@@ -137,7 +137,7 @@ def main():
     model.to(device)
     # optimizerのビルド
     ob = OptimizerBuilder(optimizer_config)
-    optimizer = ob.build(model.params)
+    optimizer = ob.build()
     # Epochごとにplotする指標
     epoch_plots = trainer_config["epoch_plots"]
     # 学習記録管理用

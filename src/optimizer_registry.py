@@ -23,9 +23,17 @@ def build_SGD(params, optimizer_config):
     return SGD(params=params, lr=lr, weight_decay=weight_decay)
 
 @register("Momentum")
-def build_Momentum(params, optimizer_config):
+def build_Momentum(optimizer_config):
     lr = optimizer_config["lr"]
-    mu = optimizer_config["mu"]
+    momentum = optimizer_config["momentum"]
     weight_decay = optimizer_config["weight_decay"]
 
-    return Momentum(params=params, lr=lr, mu=mu, weight_decay=weight_decay)
+    return Momentum(lr=lr, momentum=momentum, weight_decay=weight_decay)
+
+@register("NAG")
+def build_Momentum(optimizer_config):
+    lr = optimizer_config["lr"]
+    momentum = optimizer_config["momentum"]
+    weight_decay = optimizer_config["weight_decay"]
+
+    return NAG(lr=lr, momentum=momentum, weight_decay=weight_decay)
